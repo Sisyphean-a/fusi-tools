@@ -1,71 +1,45 @@
-# fusi-tools README
+# Fusi Tools
 
-This is the README for your extension "fusi-tools". After writing up a brief description, we recommend including the following sections.
+一个轻量级的 VS Code 工具扩展集合。
 
-## Features
+## 功能列表
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### 📝 Scratchpad (便签本)
 
-For example if there is an image subfolder under your extension project workspace:
+一个位于底部面板的临时文本输入区域，用于快速记录临时笔记。
 
-\!\[feature X\]\(images/feature-x.png\)
+**特点：**
+- 位置：VS Code 底部面板（与终端、输出、调试控制台并列）
+- 全宽度、全高度的文本输入区域
+- 内容仅保存在内存中，不会写入磁盘
+- 重新加载窗口或重启 VS Code 后内容会清空
+- 自动适配 VS Code 的明暗主题
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 设置项
 
-## Requirements
+| 设置项 | 类型 | 默认值 | 描述 |
+|--------|------|--------|------|
+| `fusi-tools.scratchpad.enabled` | boolean | `true` | 启用或禁用 Scratchpad 功能 |
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## 使用方法
 
-## Extension Settings
+1. 安装扩展后，Scratchpad 会自动出现在底部面板区域
+2. 点击底部面板的 "Scratchpad" 标签页即可开始使用
+3. 如需禁用此功能，可在设置中将 `fusi-tools.scratchpad.enabled` 设为 `false`
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 开发
 
-For example:
+```bash
+# 安装依赖
+npm install
 
-This extension contributes the following settings:
+# 编译
+npm run compile
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+# 监听模式
+npm run watch
+```
 
-## Known Issues
+## 许可证
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT
