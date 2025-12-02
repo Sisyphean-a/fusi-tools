@@ -1,7 +1,7 @@
 {
   "name": "fusi-tools",
   "displayName": "Fusi Tools",
-  "description": "",
+  "description": "A collection of useful VS Code tools",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.106.1"
@@ -12,6 +12,35 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Fusi Tools",
+      "properties": {
+        "fusi-tools.scratchpad.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the Scratchpad feature"
+        }
+      }
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "scratchpad-container",
+          "title": "Scratchpad",
+          "icon": "$(edit)"
+        }
+      ]
+    },
+    "views": {
+      "scratchpad-container": [
+        {
+          "type": "webview",
+          "id": "scratchpad.view",
+          "name": "Simple Note",
+          "when": "config.fusi-tools.scratchpad.enabled"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "fusi-tools.helloWorld",

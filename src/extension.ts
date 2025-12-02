@@ -1,26 +1,42 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { ScratchpadViewProvider } from './features/scratchpad/ScratchpadViewProvider';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+/**
+ * 扩展激活时调用
+ */
 export function activate(context: vscode.ExtensionContext) {
+	console.log('Fusi Tools is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "fusi-tools" is now active!');
+	// 注册 Scratchpad 视图提供者
+	registerScratchpad(context);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
+	// Hello World 命令（示例）
 	const disposable = vscode.commands.registerCommand('fusi-tools.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from Fusi Tools!');
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
+/**
+ * 注册 Scratchpad 功能
+ */
+function registerScratchpad(context: vscode.ExtensionContext): void {
+	const config = vscode.workspace.getConfiguration('fusi-tools');
+	const scratchpadEnabled = config.get<boolean>('scratchpad.enabled', true);
+
+	if (scratchpadEnabled) {
+		const scratchpadProvider = new ScratchpadViewProvider(context.extensionUri);
+		context.subscriptions.push(
+			vscode.window.registerWebviewViewProvider(
+				ScratchpadViewProvider.viewType,
+				scratchpadProvider
+			)
+		);
+	}
+}
+
+/**
+ * 扩展停用时调用
+ */
 export function deactivate() {}
