@@ -49,6 +49,11 @@
           "default": "deepseek-reasoner",
           "description": "深度推理模型名称 (用于生成详细分析，如 DeepSeek R1)"
         },
+        "fusi-tools.aiCommit.enableDeepThinking": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用深度思考 (R1) 生成提交信息"
+        },
         "fusi-tools.aiCommit.prompt": {
           "type": "string",
           "default": "",

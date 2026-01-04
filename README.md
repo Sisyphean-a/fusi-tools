@@ -20,7 +20,7 @@
 基于 DeepSeek 模型的智能提交信息生成工具，支持混合策略生成。
 
 **特点：**
-- **多风格生成**：同时生成 Emoji (极简)、Conventional (规范)、Detailed (详细) 三种风格的提交信息。
+- **多风格生成**：同时生成 Emoji (极简)、Conventional (规范)、Smart (深度思考) 三种风格的提交信息。
 - **混合模型策略**：结合 DeepSeek V3 (快速响应) 和 DeepSeek R1 (深度推理) 的优势。
 - **Git 集成**：直接集成在源代码管理 (SCM) 视图中，一键生成并应用。
 - **智能分析**：自动分析暂存区 (Staged) 的代码变更。
@@ -34,6 +34,7 @@
 | `fusi-tools.aiCommit.baseUrl` | string | `https://api.deepseek.com` | AI 服务的基础地址 |
 | `fusi-tools.aiCommit.model` | string | `deepseek-chat` | 快速响应模型 (用于生成简短描述) |
 | `fusi-tools.aiCommit.reasonerModel` | string | `deepseek-reasoner` | 深度推理模型 (用于生成详细分析) |
+| `fusi-tools.aiCommit.enableDeepThinking` | boolean | `true` | 是否启用深度思考 (R1) 生成 |
 
 ## 使用方法
 
@@ -52,6 +53,9 @@ npm run compile
 
 # 监听模式
 npm run watch
+
+# 打包
+vsce package
 ```
 
 ## 许可证

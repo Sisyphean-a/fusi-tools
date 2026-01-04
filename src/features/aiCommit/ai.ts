@@ -22,6 +22,7 @@ export class AiService {
         const baseUrl = this.config.get<string>('baseUrl');
         const fastModel = this.config.get<string>('model') || 'deepseek-chat';
         const reasonerModel = this.config.get<string>('reasonerModel') || 'deepseek-reasoner';
+        const enableDeep = this.config.get<boolean>('enableDeepThinking') ?? true;
 
         if (!apiKey) {
             throw new Error('API Key is not configured.');
@@ -42,31 +43,24 @@ export class AiService {
             // 可选：插入错误占位符？
         });
 
-        const reasoningTask = this.fetchDetailedOption(baseUrl!, apiKey, reasonerModel, diff).then(option => {
-            // 假设推理任务返回一个选项
-            // 我们通常希望它是最后一个，或者特定的 "Detailed" 类型。
-            // 如果快速任务未完成，它可能位于索引 0，这没关系，
-            // 但理想情况下我们希望严格排序: [Concise, Conventional, Detailed]
-            
-            // 为防止竞态条件，我们只需推送并排序
-            results.push(option);
-            
-            // 排序以确保一致性
-            // 例如: Emoji -> Conventional -> Detailed
-            this.sortOptions(results);
-            
-            onUpdate([...results]);
-        }).catch(err => {
-             console.error('推理模型失败:', err);
-        });
+        const tasks = [fastTask];
 
-        // 等待两者？还是直接让它们运行？
-        // 调用者 (命令) 通常想知道何时“所有事情”都完成了以停止加载动画。
-        await Promise.allSettled([fastTask, reasoningTask]);
+        if (enableDeep) {
+             const reasoningTask = this.fetchDetailedOption(baseUrl!, apiKey, reasonerModel, diff).then(option => {
+                results.push(option);
+                this.sortOptions(results);
+                onUpdate([...results]);
+            }).catch(err => {
+                 console.error('推理模型失败:', err);
+            });
+            tasks.push(reasoningTask);
+        }
+
+        await Promise.allSettled(tasks);
     }
 
     private sortOptions(options: CommitOption[]) {
-        const order = ['Emoji', 'Conventional', 'Detailed'];
+        const order = ['Emoji', 'Conventional', 'Smart', 'Detailed'];
         options.sort((a, b) => {
             let ia = order.indexOf(a.type);
             let ib = order.indexOf(b.type);
@@ -94,18 +88,16 @@ Return strictly a JSON Array:
 
     private async fetchDetailedOption(baseUrl: string, apiKey: string, model: string, diff: string): Promise<CommitOption> {
          const prompt = `
-You are an expert developer. Analyze the git diff deeply.
-Generate 1 "Detailed" commit message using the following format:
-
-<Header line (Conventional format)>
-<BLANK LINE>
-<Body paragraph explaining WHAT and WHY change was made>
-<BLANK LINE>
-<Footer (optional, e.g. Breaking Changes)>
+You are an expert developer. Analyze the git diff deeply to understand the true intent and impact of the changes.
+Generate 1 "Smart" commit message. 
+Although you should think deeply, the output MUST be a standard, concise Conventional Commit.
+Avoid verbosity. Avoid messy formatting. 
+Format: <type>(<scope>): <subject>
 
 Use Simplified Chinese (简体中文).
+
 Return strictly a JSON Array containing ONE object:
-[{"type":"Detailed","description":"详细说明 (多行)","message":"feat: header\\n\\nDetailed explanation..."}]
+[{"type":"Smart","description":"深度思考 (标准)","message":"feat: ..."}]
 `;
         const options = await this.callApi(baseUrl, apiKey, model, prompt, diff);
         return options[0];
