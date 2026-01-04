@@ -1,9 +1,14 @@
 {
   "name": "fusi-tools",
   "publisher": "xixifu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sisyphean-a/fusi-tools.git"
+  },
   "displayName": "Fusi Tools",
   "description": "即插即用的 VS Code 效率工具箱 (Fusi Tools)",
   "version": "1.0.0",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.104.0"
   },
