@@ -2,8 +2,8 @@
   "name": "fusi-tools",
   "publisher": "xixifu",
   "displayName": "Fusi Tools",
-  "description": "A collection of useful VS Code tools",
-  "version": "0.0.1",
+  "description": "即插即用的 VS Code 效率工具箱 (Fusi Tools)",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -11,6 +11,9 @@
     "Other"
   ],
   "activationEvents": [],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
@@ -19,7 +22,32 @@
         "fusi-tools.scratchpad.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable or disable the Scratchpad feature"
+          "description": "启用或禁用“随手记”功能"
+        },
+        "fusi-tools.aiCommit.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "AI 服务的 API (例如 DeepSeek API Key)"
+        },
+        "fusi-tools.aiCommit.baseUrl": {
+          "type": "string",
+          "default": "https://api.deepseek.com",
+          "description": "AI 服务的基础地址 (Base URL)"
+        },
+        "fusi-tools.aiCommit.model": {
+          "type": "string",
+          "default": "deepseek-chat",
+          "description": "快速响应模型名称 (用于生成简短描述，如 DeepSeek V3)"
+        },
+        "fusi-tools.aiCommit.reasonerModel": {
+          "type": "string",
+          "default": "deepseek-reasoner",
+          "description": "深度推理模型名称 (用于生成详细分析，如 DeepSeek R1)"
+        },
+        "fusi-tools.aiCommit.prompt": {
+          "type": "string",
+          "default": "",
+          "description": "自定义系统提示词 (覆盖默认设置)"
         }
       }
     },
@@ -37,17 +65,49 @@
         {
           "type": "webview",
           "id": "scratchpad.view",
-          "name": "Simple Note",
+          "name": "随手记",
           "when": "config.fusi-tools.scratchpad.enabled"
+        }
+      ],
+      "scm": [
+        {
+          "id": "fusi-tools.aiCommitView",
+          "name": "AI 提交助手"
         }
       ]
     },
     "commands": [
       {
         "command": "fusi-tools.helloWorld",
-        "title": "Hello World"
+        "title": "Demo: 你好世界"
+      },
+      {
+        "command": "fusi-tools.generateCommit",
+        "title": "生成提交信息",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fusi-tools.applyCommit",
+        "title": "应用提交信息",
+        "icon": "$(check)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fusi-tools.generateCommit",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fusi-tools.applyCommit",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "inline"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ScratchpadViewProvider } from './features/scratchpad/ScratchpadViewProvider';
+import * as aiCommit from './features/aiCommit';
 
 /**
  * 扩展激活时调用
@@ -9,6 +10,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// 注册 Scratchpad 视图提供者
 	registerScratchpad(context);
+
+    // 激活 AI Commit 助手
+    aiCommit.activate(context);
 
 	// Hello World 命令（示例）
 	const disposable = vscode.commands.registerCommand('fusi-tools.helloWorld', () => {
