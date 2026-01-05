@@ -35,8 +35,8 @@ export class GitService {
     }
 
     // 阈值定义
-    const MAX_FILES_FOR_DETAIL = 20; // 超过20个文件直接用 stat
-    // const MAX_CHARS_TOTAL = 8000; // 累计超过 8k 字符切换到 stat
+    const MAX_FILES_FOR_DETAIL = 50; // 超过50个文件直接用 stat (宽松限制)
+    // const MAX_CHARS_TOTAL = 50000; // 累计超过 50k 字符切换到 stat (按 DeepSeek 128k 窗口估算)
 
     // 情况 A: 文件太多，直接摘要模式
     if (changes.length > MAX_FILES_FOR_DETAIL) {
@@ -53,8 +53,8 @@ export class GitService {
     for (const change of changes) {
       const result = await this.processChange(change, repo.rootUri.fsPath);
 
-      // 如果单个文件处理结果过大(理论上 processChange 已经做了单文件截断，但累加起来可能还是很大)
-      if (totalOutput.length + result.length > 8000) {
+      // 如果累计字符数过大，切换到 stat 模式
+      if (totalOutput.length + result.length > 50000) {
         isStatFallback = true;
         break;
       }
