@@ -58,6 +58,25 @@
           "type": "string",
           "default": "",
           "description": "自定义系统提示词 (覆盖默认设置)"
+        },
+        "fusi-tools.smartTranslate.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用/禁用 智能翻译功能 (选中代码自动翻译/命名)"
+        },
+        "fusi-tools.smartTranslate.displayDuration": {
+          "type": "number",
+          "default": 5000,
+          "description": "翻译结果显示时长(毫秒)"
+        },
+        "fusi-tools.smartTranslate.statusBarPosition": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "default": "right",
+          "description": "翻译状态栏位置"
         }
       }
     },
@@ -110,6 +129,12 @@
         "command": "fusi-tools.applyCommit",
         "title": "应用提交信息",
         "icon": "$(check)"
+      },
+      {
+        "command": "fusi-tools.toggleSmartTranslate",
+        "title": "启用/禁用 智能翻译",
+        "icon": "$(globe)",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {

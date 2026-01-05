@@ -101,30 +101,10 @@ export class GitService {
         if (parts.length >= 2) {
           const statusChar = parts[0].charAt(0).toUpperCase(); // A, M, D
           const filePath = parts[parts.length - 1]; // Take the last part (file path)
-          // For D, M, A, it's just "STATUS PATH"
-          // For R (if enabled), it's "R SCORE OLD NEW". But we used --no-renames to simplify matching to API's distinct entries if possible.
-          // Actually VS Code API reports Renames as logical renames.
-          // If we use --no-renames, a rename shows as D + A.
-          // Let's stick to standard. If rename, we might get two entries or complex output.
-          // For simplicity in fixing the bug (Deletion showing as Added), even with renames enabled:
-          // D old
-          // A new
-          // The relativePath we get from `changes` loop corresponds to the file URI.
-          // If we match the path, we get the status.
-
-          // However, `git diff --name-status` with renames might show:
-          // R100  old.js  new.js
-          // We need to handle this.
           if (statusChar === "R") {
             // parts[1] is old, parts[2] is new
             if (parts.length >= 3) {
               map.set(parts[2], "A"); // Treat rename target as Added/Modified for content purposes
-              // map.set(parts[1], 'D'); // Old is deleted.
-              // But `changes` from VSCode API for a Rename usually gives ONE change object?
-              // Actually VSCode API `change.uri` points to the *new* file for renames usually.
-              // Let's check `change.status` for renames if we want to be perfect.
-              // But the user issue is DELETED file showing as ADDED.
-              // Deleted files in `git diff --name-status` show as `D path`.
             }
           } else {
             // A, M, D
