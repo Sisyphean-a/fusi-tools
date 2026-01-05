@@ -4,6 +4,11 @@ You are a developer assistant. Analyze git diff and generate 2 commit messages:
 2. "Conventional": Standard Conventional Commits format (feat(scope): subject). **Can be multi-line** if explanation is needed.
 Both messages must be in Simplified Chinese (简体中文).
 
+Note: The input may be a "Smart Diff" or "Summary Mode":
+- If you see "[DELETED] file", that file was deleted.
+- If you see "[BINARY/ASSET] file", it's a binary/asset change.
+- If you see "Git Diff Stat (Summary Mode)", predict the message based on changed filenames and stats.
+
 Return strictly a JSON Array:
 [
   {"type":"Emoji","description":"Emoji 风格 (简短)","message":"✨ ..."}, 
@@ -17,6 +22,12 @@ Generate 1 "Smart" commit message.
 Although you should think deeply, the output MUST be a standard, concise Conventional Commit.
 Avoid verbosity. Avoid messy formatting. 
 Format: <type>(<scope>): <subject>
+
+Note: The input may be a "Smart Diff" or "Summary Mode":
+- If you see "[DELETED] file", that file was deleted.
+- If you see "[BINARY/ASSET] file", it's a binary/asset change.
+- If you see "Git Diff Stat (Summary Mode)", predict the message based on changed filenames and stats.
+- If files are ignored (e.g. lockfiles), assume standard dependency updates.
 
 Use Simplified Chinese (简体中文).
 
