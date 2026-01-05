@@ -92,9 +92,19 @@
         "title": "Demo: 你好世界"
       },
       {
-        "command": "fusi-tools.generateCommit",
-        "title": "生成提交信息",
+        "command": "fusi-tools.previewSmartDiff",
+        "title": "查看预处理",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "fusi-tools.generateSmart",
+        "title": "预处理后生成",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "fusi-tools.generateDirect",
+        "title": "直接生成",
+        "icon": "$(rocket)"
       },
       {
         "command": "fusi-tools.applyCommit",
@@ -105,15 +115,25 @@
     "menus": {
       "view/title": [
         {
-          "command": "fusi-tools.generateCommit",
+          "command": "fusi-tools.previewSmartDiff",
           "when": "view == fusi-tools.aiCommitView",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "fusi-tools.generateSmart",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fusi-tools.generateDirect",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
           "command": "fusi-tools.applyCommit",
-          "when": "view == fusi-tools.aiCommitView",
+          "when": "view == fusi-tools.aiCommitView && viewItem == commitItem",
           "group": "inline"
         }
       ]

@@ -116,13 +116,19 @@ export class AiService {
     systemPrompt: string,
     userContent: string
   ): Promise<CommitOption[]> {
-    // [DEBUG] 打印完整请求内容供调试验证
-    console.log("--- [AI Commit Request Start] ---");
-    console.log("Model:", model);
-    console.log("System Prompt:", systemPrompt);
-    console.log("User Content (Diff):", userContent);
-    console.log("User Content Length:", userContent.length, "chars");
-    console.log("--- [AI Commit Request End] ---");
+    const requestBody = {
+      model: model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      stream: false,
+    };
+
+    // [DEBUG] 打印完整请求参数
+    console.log("--- [AI Commit Request Payload] ---");
+    console.log(JSON.stringify(requestBody, null, 2));
+    console.log("-----------------------------------");
 
     try {
       const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -131,14 +137,7 @@ export class AiService {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ],
-          stream: false,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
