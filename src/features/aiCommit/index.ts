@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { Logger } from "../../logger";
 import { GitService } from "./git";
 import { AiService } from "./ai";
 import { AiCommitViewProvider, CommitItem } from "./treeProvider";
@@ -33,13 +34,19 @@ export function activate(context: vscode.ExtensionContext) {
           // updatePreProcess 会清空 commitItems，所以如果这次是基于 preProcess 的，只要 refresh 就行。
 
           // 调用混合策略 AI 服务
+          Logger.info(
+            `正在调用 AI 生成 (混合策略)... Diff 长度: ${diff.length}`
+          );
           await aiService.generateHybrid(diff, (options) => {
+            Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
             provider.refresh(options);
           });
+          Logger.info("AI 生成流程完成");
 
           // 聚焦到视图
           vscode.commands.executeCommand("fusi-tools.aiCommitView.focus");
         } catch (error: any) {
+          Logger.error("AI 生成中断或失败", error);
           vscode.window.showErrorMessage(`生成失败: ${error.message}`);
         }
       }
@@ -59,6 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
         await new Promise((r) => setTimeout(r, 100));
 
         // 2. 分析
+        Logger.info("正在分析文件变更 (智能预处理)...");
         const analysis = await gitService.analyzeChanges();
         if (!analysis || analysis.length === 0) {
           provider.clear(); // 清除加载态
@@ -73,8 +81,10 @@ export function activate(context: vscode.ExtensionContext) {
         provider.updatePreProcess(analysis);
 
         // 5. 聚焦视图
+        Logger.info("预处理完成，已更新 UI。");
         vscode.commands.executeCommand("fusi-tools.aiCommitView.focus");
       } catch (error: any) {
+        Logger.error("预处理执行失败", error);
         provider.clear();
         vscode.window.showErrorMessage(`预处理失败: ${error.message}`);
       }
@@ -144,11 +154,13 @@ export function activate(context: vscode.ExtensionContext) {
           // 右键菜单触发
           message = arg.option.message;
         } else {
+          Logger.error("应用提交失败: 参数无效", arg);
           console.error("applyCommit 参数无效", arg);
           return;
         }
 
         if (message) {
+          Logger.info("尝试应用提交信息到 Git 输入框");
           gitService.setCommitMessage(message);
         }
       }

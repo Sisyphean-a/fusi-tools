@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { Logger } from "../../logger";
 import { FAST_PROMPT, DETAILED_PROMPT } from "./prompts";
 
 export interface CommitOption {
@@ -46,6 +47,7 @@ export class AiService {
         onUpdate([...results]);
       })
       .catch((err) => {
+        Logger.error("快速模型 (Fast Model) 请求失败", err);
         console.error("快速模型失败:", err);
         // 可选：插入错误占位符？
       });
@@ -65,6 +67,7 @@ export class AiService {
           onUpdate([...results]);
         })
         .catch((err) => {
+          Logger.error("推理模型 (Reasoner Model) 请求失败", err);
           console.error("推理模型失败:", err);
         });
       tasks.push(reasoningTask);
@@ -126,9 +129,10 @@ export class AiService {
     };
 
     // [DEBUG] 打印完整请求参数
-    console.log("--- [AI Commit Request Payload] ---");
-    console.log(JSON.stringify(requestBody, null, 2));
-    console.log("-----------------------------------");
+    // console.log("--- [AI Commit Request Payload] ---");
+    // console.log(JSON.stringify(requestBody, null, 2));
+    // console.log("-----------------------------------");
+    Logger.info(`[AI 请求] 模型: ${model}, 字符数: ${userContent.length}`);
 
     try {
       const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -151,6 +155,7 @@ export class AiService {
 
       return this.parseResponse(content);
     } catch (error) {
+      Logger.error(`API 调用异常: ${model}`, error);
       console.error(error);
       return []; // Return empty on failure to not crash the whole Promise.all
     }
@@ -171,6 +176,7 @@ export class AiService {
       }
       return [];
     } catch (e) {
+      Logger.error("AI 响应解析失败", e);
       console.error("Parse error", content);
       return [];
     }

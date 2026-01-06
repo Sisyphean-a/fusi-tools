@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { Logger } from "../../logger";
 import { TranslatorService, TranslationResult } from "./translator";
 import { StatusBarManager } from "./ui/statusBar";
 import { NameGenerator } from "./nameGenerator";
@@ -19,7 +20,7 @@ let disposables: vscode.Disposable[] = [];
 let isEnabled = false;
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("Smart Translate feature is initializing...");
+  Logger.info("智能翻译功能正在初始化...");
 
   // 注册切换命令
   context.subscriptions.push(
@@ -107,7 +108,7 @@ function startFeature(context: vscode.ExtensionContext) {
   disposables.push(statusBarManager); // 确保状态栏被清理
 
   isEnabled = true;
-  console.log("Smart Translate feature started.");
+  Logger.info("智能翻译功能已启动。正在监听文本选择...");
 }
 
 function stopFeature() {
@@ -132,7 +133,7 @@ function stopFeature() {
   lastTranslationResult = null;
 
   isEnabled = false;
-  console.log("Smart Translate feature stopped.");
+  Logger.info("智能翻译功能已停止。");
 }
 
 async function handleSelectionChange(
@@ -154,6 +155,7 @@ async function handleSelectionChange(
 
   // 使用防抖机制，延迟处理选择事件
   selectionDebounceTimer = setTimeout(async () => {
+    // Logger.info(`Processing selection change (debounced). Empty: ${selection.isEmpty}`);
     try {
       // 再次检查选择是否仍然有效
       const editor = vscode.window.activeTextEditor;
@@ -177,8 +179,12 @@ async function handleSelectionChange(
         selectedText.length > 0 &&
         selectedText.length < 500
       ) {
+        // Logger.info(`Selected text found: "${selectedText.substring(0, 20)}..."`);
         // 避免重复翻译相同的文本
         if (selectedText !== lastSelectionText) {
+          Logger.info(
+            `检测到新文本，准备翻译: "${selectedText.substring(0, 20)}..."`
+          );
           lastSelectionText = selectedText;
           await translateSelectedText(selectedText);
         }
@@ -237,6 +243,7 @@ async function translateSelectedText(text: string): Promise<void> {
     statusBarManager.showTranslation(result);
   } catch (error) {
     console.error("Translation error:", error);
+    Logger.error("翻译出错:", error);
     statusBarManager.showError("翻译失败");
   }
 }

@@ -1,62 +1,64 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import { Logger } from "../../logger";
 
 /**
  * Scratchpad Webview 视图提供者
  * 提供一个临时的文本输入区域，内容仅保存在内存中
  */
 export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'scratchpad.view';
+  public static readonly viewType = "scratchpad.view";
 
-    private _view?: vscode.WebviewView;
-    private _content: string = '';
+  private _view?: vscode.WebviewView;
+  private _content: string = "";
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {}
 
-    public resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        _context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken
-    ): void {
-        this._view = webviewView;
+  public resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
+  ): void {
+    Logger.info("Scratchpad 视图正在初始化...");
+    this._view = webviewView;
 
-        webviewView.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [this._extensionUri]
-        };
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this._extensionUri],
+    };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        // 监听来自 Webview 的消息
-        webviewView.webview.onDidReceiveMessage(
-            (message) => {
-                switch (message.type) {
-                    case 'contentChanged':
-                        this._content = message.content;
-                        break;
-                }
-            },
-            undefined
-        );
+    // 监听来自 Webview 的消息
+    webviewView.webview.onDidReceiveMessage((message) => {
+      switch (message.type) {
+        case "contentChanged":
+          this._content = message.content;
+          // 不记录频繁的内容变更日志，以免刷屏
+          break;
+      }
+    }, undefined);
 
-        // 当视图可见时恢复内容
-        webviewView.onDidChangeVisibility(() => {
-            if (webviewView.visible) {
-                this._restoreContent();
-            }
-        });
+    // 当视图可见时恢复内容
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        Logger.info("Scratchpad 视图变为可见，正在恢复内容...");
+        this._restoreContent();
+      }
+    });
+  }
+
+  private _restoreContent(): void {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "restoreContent",
+        content: this._content,
+      });
+      Logger.info(`Scratchpad 内容已恢复 (长度: ${this._content.length})`);
     }
+  }
 
-    private _restoreContent(): void {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'restoreContent',
-                content: this._content
-            });
-        }
-    }
-
-    private _getHtmlForWebview(_webview: vscode.Webview): string {
-        return `<!DOCTYPE html>
+  private _getHtmlForWebview(_webview: vscode.Webview): string {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -116,6 +118,5 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
     </script>
 </body>
 </html>`;
-    }
+  }
 }
-

@@ -2,12 +2,13 @@ import * as vscode from "vscode";
 import { ScratchpadViewProvider } from "./features/scratchpad/ScratchpadViewProvider";
 import * as aiCommit from "./features/aiCommit";
 import * as smartTranslate from "./features/smartTranslate";
+import { Logger } from "./logger";
 
 /**
  * 扩展激活时调用
  */
 export function activate(context: vscode.ExtensionContext) {
-  console.log("Fusi Tools is now active!");
+  Logger.info("Fusi Tools is activating...");
 
   // 注册 Scratchpad 视图提供者
   registerScratchpad(context);
@@ -23,10 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
     "fusi-tools.helloWorld",
     () => {
       vscode.window.showInformationMessage("Hello World from Fusi Tools!");
+      Logger.info("Hello World command executed");
     }
   );
 
   context.subscriptions.push(disposable);
+  Logger.info("Fusi Tools activation completed.");
 }
 
 /**
