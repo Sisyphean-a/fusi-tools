@@ -26,7 +26,8 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this._extensionUri],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    // 异步加载 HTML 内容
+    this._updateWebviewHtml(webviewView);
 
     // 监听来自 Webview 的消息
     webviewView.webview.onDidReceiveMessage((message) => {
@@ -57,66 +58,21 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private _getHtmlForWebview(_webview: vscode.Webview): string {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scratchpad</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        textarea {
-            width: 100%;
-            height: 100vh;
-            background-color: var(--vscode-editor-background);
-            color: var(--vscode-editor-foreground);
-            font-family: var(--vscode-editor-font-family);
-            font-size: var(--vscode-editor-font-size);
-            border: none;
-            outline: none;
-            resize: none;
-            padding: 8px;
-        }
-        textarea::placeholder {
-            color: var(--vscode-input-placeholderForeground);
-        }
-    </style>
-</head>
-<body>
-    <textarea id="scratchpad" placeholder="Type your notes here..."></textarea>
-    <script>
-        const vscode = acquireVsCodeApi();
-        const textarea = document.getElementById('scratchpad');
-
-        // 监听内容变化
-        textarea.addEventListener('input', () => {
-            vscode.postMessage({
-                type: 'contentChanged',
-                content: textarea.value
-            });
-        });
-
-        // 接收来自扩展的消息
-        window.addEventListener('message', (event) => {
-            const message = event.data;
-            switch (message.type) {
-                case 'restoreContent':
-                    textarea.value = message.content;
-                    break;
-            }
-        });
-    </script>
-</body>
-</html>`;
+  private async _updateWebviewHtml(webviewView: vscode.WebviewView) {
+    const htmlUri = vscode.Uri.joinPath(
+      this._extensionUri,
+      "src",
+      "features",
+      "scratchpad",
+      "scratchpad.html"
+    );
+    try {
+      const uint8Array = await vscode.workspace.fs.readFile(htmlUri);
+      const htmlContent = new TextDecoder().decode(uint8Array);
+      webviewView.webview.html = htmlContent;
+    } catch (error) {
+      Logger.error(`读取 Scratchpad HTML 失败: ${error}`);
+      webviewView.webview.html = `<!DOCTYPE html><html><body>Error loading UI</body></html>`;
+    }
   }
 }
