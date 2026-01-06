@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ScratchpadViewProvider } from "./features/scratchpad/ScratchpadViewProvider";
 import * as aiCommit from "./features/aiCommit";
 import * as smartTranslate from "./features/smartTranslate";
+import * as projectFavorites from "./features/projectFavorites";
 import { Logger } from "./logger";
 
 /**
@@ -18,6 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 激活 智能翻译功能
   smartTranslate.activate(context);
+
+  // 激活 项目常用文件 (Favorites)
+  projectFavorites.activate(context);
 
   // Hello World 命令（示例）
   const disposable = vscode.commands.registerCommand(

@@ -79,10 +79,22 @@
           ],
           "default": "right",
           "description": "翻译状态栏位置"
+        },
+        "fusi-tools.projectFavorites.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用/禁用 项目常用文件 (Project Favorites) 功能"
         }
       }
     },
     "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "projectFavorites-container",
+          "title": "常用文件",
+          "icon": "$(star-full)"
+        }
+      ],
       "panel": [
         {
           "id": "scratchpad-container",
@@ -97,13 +109,22 @@
           "type": "webview",
           "id": "scratchpad.view",
           "name": "随手记",
+          "icon": "$(edit)",
           "when": "config.fusi-tools.scratchpad.enabled"
         }
       ],
       "scm": [
         {
           "id": "fusi-tools.aiCommitView",
-          "name": "AI 提交助手"
+          "name": "AI 提交助手",
+          "icon": "$(sparkle)"
+        }
+      ],
+      "projectFavorites-container": [
+        {
+          "id": "fusi-tools.projectFavorites.view",
+          "name": "常用文件",
+          "icon": "$(star-full)"
         }
       ]
     },
@@ -137,9 +158,88 @@
         "title": "启用/禁用 智能翻译",
         "icon": "$(globe)",
         "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.addFile",
+        "title": "添加到常用",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.moveToCategory",
+        "title": "移动到分类",
+        "icon": "$(arrow-right)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.addCategory",
+        "title": "新建分类",
+        "icon": "$(new-folder)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.removeFile",
+        "title": "从常用中移除",
+        "icon": "$(trash)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.removeCategory",
+        "title": "删除分类",
+        "icon": "$(trash)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.renameCategory",
+        "title": "重命名分类",
+        "icon": "$(edit)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.renameFile",
+        "title": "设置别名",
+        "icon": "$(tag)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.projectFavorites.refresh",
+        "title": "刷新",
+        "icon": "$(refresh)",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {
+      "view/item/context": [
+        {
+          "command": "fusi-tools.applyCommit",
+          "when": "view == fusi-tools.aiCommitView && viewItem == commitItem",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.renameCategory",
+          "when": "view == fusi-tools.projectFavorites.view && viewItem == favoriteCategory",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.removeCategory",
+          "when": "view == fusi-tools.projectFavorites.view && viewItem == favoriteCategory",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.renameFile",
+          "when": "view == fusi-tools.projectFavorites.view && (viewItem == favoriteFile || viewItem == favoriteFolder)",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.removeFile",
+          "when": "view == fusi-tools.projectFavorites.view && (viewItem == favoriteFile || viewItem == favoriteFolder || viewItem == favoriteGhostFile)",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.moveToCategory",
+          "when": "view == fusi-tools.projectFavorites.view && (viewItem == favoriteFile || viewItem == favoriteFolder)",
+          "group": "inline"
+        }
+      ],
       "view/title": [
         {
           "command": "fusi-tools.previewSmartDiff",
@@ -155,13 +255,23 @@
           "command": "fusi-tools.generateDirect",
           "when": "view == fusi-tools.aiCommitView",
           "group": "navigation@3"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.addCategory",
+          "when": "view == fusi-tools.projectFavorites.view",
+          "group": "navigation"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.refresh",
+          "when": "view == fusi-tools.projectFavorites.view",
+          "group": "navigation"
         }
       ],
-      "view/item/context": [
+      "explorer/context": [
         {
-          "command": "fusi-tools.applyCommit",
-          "when": "view == fusi-tools.aiCommitView && viewItem == commitItem",
-          "group": "inline"
+          "command": "fusi-tools.projectFavorites.addFile",
+          "group": "7_modification",
+          "when": "resourceScheme == file || resourceScheme == folder"
         }
       ]
     }
