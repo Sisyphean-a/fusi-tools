@@ -7,6 +7,11 @@ export interface SmartChange {
   status: string; // Localized status description (e.g. "已删除", "完整")
   content: string; // Diff content or summary description
   rawStatus?: number; // Git status code (optional)
+  // 统计信息
+  additions: number;
+  deletions: number;
+  chars: number;
+  tokens: number;
 }
 
 export class GitService {
@@ -58,6 +63,10 @@ export class GitService {
           relativePath,
           status: "TRUNCATED",
           content: "[Pre-check] Too many files, content skipped.",
+          additions: 0,
+          deletions: 0,
+          chars: 0,
+          tokens: 0,
         });
         continue;
       }
@@ -198,6 +207,10 @@ export class GitService {
         relativePath,
         status: "已删除",
         content: `[已删除] ${relativePath}`,
+        additions: 0,
+        deletions: 0,
+        chars: 0,
+        tokens: 0,
       };
     }
 
@@ -211,6 +224,10 @@ export class GitService {
         relativePath,
         status: "锁文件",
         content: `File Changed: ${relativePath} (dependency lockfile update)`,
+        additions: 0,
+        deletions: 0,
+        chars: 0,
+        tokens: 0,
       };
     }
 
@@ -250,6 +267,10 @@ export class GitService {
         relativePath,
         status: "二进制/媒体",
         content: `[BINARY/ASSET] ${relativePath}`,
+        additions: 0,
+        deletions: 0,
+        chars: 0,
+        tokens: 0,
       };
     }
 
@@ -263,6 +284,10 @@ export class GitService {
         relativePath,
         status: "压缩文件",
         content: `[MINIFIED/GENERATED] ${relativePath}`,
+        additions: 0,
+        deletions: 0,
+        chars: 0,
+        tokens: 0,
       };
     }
 
@@ -270,6 +295,19 @@ export class GitService {
     try {
       const diffContent = await this.execGitDiff(rootPath, relativePath);
       const lines = diffContent.split("\n");
+
+      // 计算统计信息
+      let additions = 0;
+      let deletions = 0;
+      for (const line of lines) {
+        if (line.startsWith("+") && !line.startsWith("+++")) {
+          additions++;
+        } else if (line.startsWith("-") && !line.startsWith("---")) {
+          deletions++;
+        }
+      }
+      const chars = diffContent.length;
+      const tokens = Math.ceil(chars / 4); // 粗略估算
 
       // A. 新增文件特殊处理 (Added)
       // Use gitStatus 'A'
@@ -283,6 +321,10 @@ export class GitService {
             content: `File: ${relativePath} (New File Truncated)\n${head}\n... (middle ${
               lines.length - 50
             } lines skipped) ...\n${tail}`,
+            additions,
+            deletions,
+            chars,
+            tokens,
           };
         }
       }
@@ -296,6 +338,10 @@ export class GitService {
           relativePath,
           status: "已截断",
           content: `File: ${relativePath}\n${head}\n... (content skipped) ...\n${tail}`,
+          additions,
+          deletions,
+          chars,
+          tokens,
         };
       }
 
@@ -303,6 +349,10 @@ export class GitService {
         relativePath,
         status: "完整",
         content: `File: ${relativePath}\n${diffContent}`,
+        additions,
+        deletions,
+        chars,
+        tokens,
       };
     } catch (e) {
       console.error(`Failed to get diff for ${relativePath}`, e);
@@ -310,6 +360,10 @@ export class GitService {
         relativePath,
         status: "完整", // 标记为 Full 但内容是错误提示
         content: `File: ${relativePath} (Error reading diff)`,
+        additions: 0,
+        deletions: 0,
+        chars: 0,
+        tokens: 0,
       };
     }
   }

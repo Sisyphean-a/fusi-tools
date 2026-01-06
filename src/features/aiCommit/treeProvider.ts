@@ -23,26 +23,28 @@ export class CommitItem extends vscode.TreeItem {
 // 2. 预处理文件项 (叶子节点)
 export class PreProcessFileItem extends vscode.TreeItem {
   constructor(change: SmartChange) {
-    // 使用文件名作为 Label
-    // 使用状态作为 description
-    // e.g. "utils.ts" [TRUNCATED]
     super(
       change.relativePath.split("/").pop() || change.relativePath,
       vscode.TreeItemCollapsibleState.None
     );
 
-    this.description = change.status === "FULL" ? "" : `[${change.status}]`;
-    // Tooltip 显示完整路径和一些解释
-    const md = new vscode.MarkdownString(
-      `**${change.relativePath}**\n\nStatus: ${change.status}`
-    );
-    md.appendCodeblock(change.content, "diff");
-    md.isTrusted = true; // 允许受信任的内容，有助于交互
-    md.supportHtml = true;
-    this.tooltip = md;
-    this.resourceUri = vscode.Uri.file(change.relativePath); // 可选：显示文件图标
+    this.description = change.status === "完整" ? "" : `[${change.status}]`;
 
-    // 如果是 FULL 或 TRUNCATED，点击可能可以查看 Diff? 暂时不绑定命令
+    // Tooltip 显示统计信息
+    const md = new vscode.MarkdownString();
+    md.appendMarkdown(`**文件：** \`${change.relativePath}\`\n\n`);
+    md.appendMarkdown(`**状态：** ${change.status}\n\n`);
+    md.appendMarkdown(`--- \n\n`);
+    md.appendMarkdown(`**修改统计：**\n\n`);
+    md.appendMarkdown(`- 新增行数：\`${change.additions}\`\n`);
+    md.appendMarkdown(`- 删除行数：\`${change.deletions}\`\n`);
+    md.appendMarkdown(`- 字符数：\`${change.chars}\`\n`);
+    md.appendMarkdown(`- 估算 Token：\`${change.tokens}\`\n`);
+
+    md.isTrusted = true;
+    this.tooltip = md;
+    this.resourceUri = vscode.Uri.file(change.relativePath);
+
     this.contextValue = "preProcessFile";
   }
 }

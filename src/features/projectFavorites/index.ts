@@ -93,9 +93,6 @@ export function activate(context: vscode.ExtensionContext) {
       "fusi-tools.projectFavorites.removeFile",
       (item: any) => {
         Logger.info("命令触发: removeFile");
-        // item is the TreeItem object we returned in getTreeItem, or the element?
-        // In TreeView commands, it passes the element (TreeElement).
-        // Our element is { file: FavoriteFile; categoryId: string } | FavoriteCategory
         if (item && item.file && item.categoryId) {
           manager.removeFileFromCategory(item.file.id, item.categoryId);
           provider.refresh();

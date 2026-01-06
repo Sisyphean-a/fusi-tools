@@ -118,12 +118,6 @@ export class FavoritesManager {
       return storedPath; // Can't resolve without workspace
     }
 
-    // Simple assumption: relative to the first root or try all?
-    // Since we didn't store WHICH root it belongs to, we typically assume single root or
-    // we should have stored the root index/name.
-    // For multi-root workspaces, `vscode.workspace.asRelativePath` is safer if we persist it correctly.
-    // But `path.relative` above assumes simplified logic.
-    // Let's fallback to primary root for now for MVP.
     return path.join(folders[0].uri.fsPath, storedPath);
   }
 
@@ -150,11 +144,6 @@ export class FavoritesManager {
     const type = stats.type & vscode.FileType.Directory ? "folder" : "file";
     const relativePath = this.toRelativePath(uri.fsPath);
 
-    // Check if already exists in pool?
-    // Design says: "files" pool stores unique files.
-    // But wait, if I add the same file to multiple categories, I should reuse the ID.
-    // So let's check if this path already exists in `files`.
-
     let existingFileId: string | undefined;
     for (const id in this._data.files) {
       if (this._data.files[id].path === relativePath) {
@@ -170,7 +159,6 @@ export class FavoritesManager {
         id: fileId,
         path: relativePath,
         type: type,
-        // Default alias is filename if needed, but we usually just display basename dynamically
       };
     }
 
@@ -295,11 +283,6 @@ export class FavoritesManager {
           file.path = newPathRel;
           changed = true;
         } else if (file.path.startsWith(oldPathRel + path.sep)) {
-          // It was a subfile of a renamed folder?
-          // Relative path handling should implicitly handle this if we just stored string paths.
-          // But if we store "src/folder/file.ts" and "src/folder" becomes "src/folder2",
-          // "src/folder/file.ts" needs update.
-          // Implementation detail: for now simpler check:
           file.path = file.path.replace(oldPathRel, newPathRel);
           changed = true;
         }
@@ -312,10 +295,5 @@ export class FavoritesManager {
 
   public handleFileDeletions(e: vscode.FileDeleteEvent) {
     Logger.info(`检测到文件删除: ${e.files.length} 个文件`);
-    // We don't delete from favorites immediately, we let them become "ghosts"
-    // So nothing to do here strictly, unless we wanted to aggressively clean up.
-    // Design doc says: "Ghost File Detection ... mark as gray"
-    // So we do NOT remove data here.
-    this._onDidChangeTreeData.fire(); // Trigger refresh to show ghost status
   }
 }
