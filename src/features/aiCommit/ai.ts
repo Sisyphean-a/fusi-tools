@@ -28,7 +28,7 @@ export class AiService {
     const fastModel = this.config.get<string>("model") || "deepseek-chat";
     const reasonerModel =
       this.config.get<string>("reasonerModel") || "deepseek-reasoner";
-    const enableDeep = this.config.get<boolean>("enableDeepThinking") ?? true;
+    const enableDeep = this.config.get<boolean>("enableDeepThinking") ?? false;
 
     if (!apiKey) {
       throw new Error("API Key is not configured.");
@@ -77,7 +77,13 @@ export class AiService {
   }
 
   private sortOptions(options: CommitOption[]) {
-    const order = ["Emoji", "Conventional", "Smart", "Detailed"];
+    const order = [
+      "Emoji",
+      "Conventional",
+      "StandardShort",
+      "Smart",
+      "Detailed",
+    ];
     options.sort((a, b) => {
       let ia = order.indexOf(a.type);
       let ib = order.indexOf(b.type);
