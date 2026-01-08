@@ -33,11 +33,11 @@ export function activate(context: vscode.ExtensionContext) {
           // provider.clear() 会全清，所以我们需要一个只清 commitItems 的方法？
           // updatePreProcess 会清空 commitItems，所以如果这次是基于 preProcess 的，只要 refresh 就行。
 
-          // 调用混合策略 AI 服务
+          // 调用快速 AI 服务
           Logger.info(
-            `正在调用 AI 生成 (混合策略)... Diff 长度: ${diff.length}`
+            `正在调用 AI 生成 (快速策略)... Diff 长度: ${diff.length}`
           );
-          await aiService.generateHybrid(diff, (options) => {
+          await aiService.generate(diff, (options) => {
             Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
             provider.refresh(options);
           });

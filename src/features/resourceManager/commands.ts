@@ -69,6 +69,7 @@ export class ResourceCommands {
 
     // 选项配置
     const depthOptions = [
+      { label: "所有层级", description: "递归完整目录树", value: -1 },
       { label: "1 层", description: "仅子目录/文件", value: 1 },
       {
         label: "2 层",
@@ -76,7 +77,6 @@ export class ResourceCommands {
         value: 2,
       },
       { label: "3 层", description: "三层深度", value: 3 },
-      { label: "所有层级", description: "递归完整目录树", value: -1 },
     ];
 
     const selected = await vscode.window.showQuickPick(depthOptions, {

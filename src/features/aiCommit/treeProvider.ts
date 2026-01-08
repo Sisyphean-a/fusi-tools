@@ -8,6 +8,7 @@ export class CommitItem extends vscode.TreeItem {
     super(option.type, vscode.TreeItemCollapsibleState.None);
     this.description = option.description; // e.g., "Short summary"
     this.tooltip = option.message;
+    this.iconPath = new vscode.ThemeIcon("git-commit");
 
     // When clicked, trigger the apply command with the message
     this.command = {
@@ -55,6 +56,7 @@ export class PreProcessGroupItem extends vscode.TreeItem {
     super("暂存文件预处理结果", vscode.TreeItemCollapsibleState.Expanded);
     this.description = `(${count} 文件)`;
     this.tooltip = "点击查看 AI 预处理后的文件状态列表";
+    this.iconPath = new vscode.ThemeIcon("file-submodule");
     this.contextValue = "preProcessGroup";
   }
 }
@@ -65,6 +67,7 @@ export class CommitGroupItem extends vscode.TreeItem {
     super("AI 提交建议", vscode.TreeItemCollapsibleState.Expanded);
     this.description = `(${count} 条建议)`;
     this.tooltip = "AI 生成的 Commit Message 建议";
+    this.iconPath = new vscode.ThemeIcon("sparkle");
     this.contextValue = "commitGroup";
   }
 }

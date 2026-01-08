@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Logger } from "../../logger";
-import { FAST_PROMPT, DETAILED_PROMPT } from "./prompts";
+import { FAST_PROMPT } from "./prompts";
 
 export interface CommitOption {
   type: string;
@@ -14,76 +14,35 @@ export class AiService {
   }
 
   /**
-   * 执行混合策略:
+   * 执行生成策略:
    * 1. 发起快速请求 (V3) 生成 "Concise" (简短) + "Conventional" (规范) 风格。
-   * 2. 发起推理请求 (R1) 生成 "Detailed" (详细) 风格。
-   * 3. 任何数据可用时立即调用 onUpdate。
+   * 2. 数据可用时立即调用 onUpdate。
    */
-  async generateHybrid(
-    diff: string,
-    onUpdate: (options: CommitOption[]) => void
-  ) {
+  async generate(diff: string, onUpdate: (options: CommitOption[]) => void) {
     const apiKey = this.config.get<string>("apiKey");
     const baseUrl = this.config.get<string>("baseUrl");
     const fastModel = this.config.get<string>("model") || "deepseek-chat";
-    const reasonerModel =
-      this.config.get<string>("reasonerModel") || "deepseek-reasoner";
-    const enableDeep = this.config.get<boolean>("enableDeepThinking") ?? false;
 
     if (!apiKey) {
       throw new Error("API Key is not configured.");
     }
 
-    // 共享结果状态
-    // [Concise, Conventional, Detailed]
-    const results: CommitOption[] = [];
-
-    // 定义两个并行任务
-    const fastTask = this.fetchFastOptions(baseUrl!, apiKey, fastModel, diff)
-      .then((options) => {
-        // 假设快速任务返回 [Concise, Conventional]
-        // 将它们插入到开头
-        results.splice(0, 0, ...options);
-        onUpdate([...results]);
-      })
-      .catch((err) => {
-        Logger.error("快速模型 (Fast Model) 请求失败", err);
-        console.error("快速模型失败:", err);
-        // 可选：插入错误占位符？
-      });
-
-    const tasks = [fastTask];
-
-    if (enableDeep) {
-      const reasoningTask = this.fetchDetailedOption(
+    try {
+      const options = await this.fetchFastOptions(
         baseUrl!,
         apiKey,
-        reasonerModel,
+        fastModel,
         diff
-      )
-        .then((option) => {
-          results.push(option);
-          this.sortOptions(results);
-          onUpdate([...results]);
-        })
-        .catch((err) => {
-          Logger.error("推理模型 (Reasoner Model) 请求失败", err);
-          console.error("推理模型失败:", err);
-        });
-      tasks.push(reasoningTask);
+      );
+      onUpdate(options);
+    } catch (err) {
+      Logger.error("快速模型 (Fast Model) 请求失败", err);
+      console.error("快速模型失败:", err);
     }
-
-    await Promise.allSettled(tasks);
   }
 
   private sortOptions(options: CommitOption[]) {
-    const order = [
-      "Emoji",
-      "Conventional",
-      "StandardShort",
-      "Smart",
-      "Detailed",
-    ];
+    const order = ["Emoji", "Conventional", "StandardShort", "Smart"];
     options.sort((a, b) => {
       let ia = order.indexOf(a.type);
       let ib = order.indexOf(b.type);
@@ -100,22 +59,6 @@ export class AiService {
     diff: string
   ): Promise<CommitOption[]> {
     return this.callApi(baseUrl, apiKey, model, FAST_PROMPT, diff);
-  }
-
-  private async fetchDetailedOption(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    diff: string
-  ): Promise<CommitOption> {
-    const options = await this.callApi(
-      baseUrl,
-      apiKey,
-      model,
-      DETAILED_PROMPT,
-      diff
-    );
-    return options[0];
   }
 
   private async callApi(

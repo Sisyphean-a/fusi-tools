@@ -44,17 +44,7 @@
         "fusi-tools.aiCommit.model": {
           "type": "string",
           "default": "deepseek-chat",
-          "description": "快速响应模型名称 (用于生成简短描述，如 DeepSeek V3)"
-        },
-        "fusi-tools.aiCommit.reasonerModel": {
-          "type": "string",
-          "default": "deepseek-reasoner",
-          "description": "深度推理模型名称 (用于生成详细分析，如 DeepSeek R1)"
-        },
-        "fusi-tools.aiCommit.enableDeepThinking": {
-          "type": "boolean",
-          "default": true,
-          "description": "是否启用深度思考 (R1) 生成提交信息"
+          "description": "AI 模型名称 (例如 deepseek-chat)"
         },
         "fusi-tools.aiCommit.prompt": {
           "type": "string",
@@ -208,17 +198,17 @@
       },
       {
         "command": "fusi-tools.copyName",
-        "title": "复制文件名 (Copy Name)",
+        "title": "Copy Name",
         "category": "Fusi Tools"
       },
       {
         "command": "fusi-tools.copyRelativeName",
-        "title": "复制相对路径 (@Copy Name)",
+        "title": "@Copy Name",
         "category": "Fusi Tools"
       },
       {
         "command": "fusi-tools.generateTree",
-        "title": "生成目录结构树 (Generate Tree)",
+        "title": "Generate Tree",
         "category": "Fusi Tools"
       }
     ],
