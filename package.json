@@ -273,6 +273,13 @@
           "group": "7_modification",
           "when": "resourceScheme == file || resourceScheme == folder"
         }
+      ],
+      "editor/title/context": [
+        {
+          "command": "fusi-tools.projectFavorites.addFile",
+          "group": "7_modification",
+          "when": "resourceScheme == file"
+        }
       ]
     }
   },
