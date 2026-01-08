@@ -23,60 +23,110 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "configuration": {
-      "title": "Fusi Tools",
-      "properties": {
-        "fusi-tools.scratchpad.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "启用或禁用“随手记”功能"
-        },
-        "fusi-tools.aiCommit.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "AI 服务的 API (例如 DeepSeek API Key)"
-        },
-        "fusi-tools.aiCommit.baseUrl": {
-          "type": "string",
-          "default": "https://api.deepseek.com",
-          "description": "AI 服务的基础地址 (Base URL)"
-        },
-        "fusi-tools.aiCommit.model": {
-          "type": "string",
-          "default": "deepseek-chat",
-          "description": "AI 模型名称 (例如 deepseek-chat)"
-        },
-        "fusi-tools.aiCommit.prompt": {
-          "type": "string",
-          "default": "",
-          "description": "自定义系统提示词 (覆盖默认设置)"
-        },
-        "fusi-tools.smartTranslate.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "启用/禁用 智能翻译功能 (选中代码自动翻译/命名)"
-        },
-        "fusi-tools.smartTranslate.displayDuration": {
-          "type": "number",
-          "default": 5000,
-          "description": "翻译结果显示时长(毫秒)"
-        },
-        "fusi-tools.smartTranslate.statusBarPosition": {
-          "type": "string",
-          "enum": [
-            "left",
-            "right"
-          ],
-          "default": "right",
-          "description": "翻译状态栏位置"
-        },
-        "fusi-tools.projectFavorites.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "启用/禁用 项目常用文件 (Project Favorites) 功能"
+    "configuration": [
+      {
+        "title": "FT: AI Commit",
+        "properties": {
+          "fusi-tools.aiCommit.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **AI 提交助手** 功能。"
+          },
+          "fusi-tools.aiCommit.apiKey": {
+            "type": "string",
+            "default": "",
+            "order": 1,
+            "markdownDescription": "AI 服务的 API Key (例如 DeepSeek API Key)。[获取 Key](https://platform.deepseek.com/)",
+            "markdownAttributes": {
+              "placeholder": "sk-..."
+            }
+          },
+          "fusi-tools.aiCommit.baseUrl": {
+            "type": "string",
+            "default": "https://api.deepseek.com",
+            "order": 2,
+            "markdownDescription": "AI 服务的基础地址 (Base URL)。"
+          },
+          "fusi-tools.aiCommit.model": {
+            "type": "string",
+            "default": "deepseek-chat",
+            "order": 3,
+            "markdownDescription": "AI 模型名称 (例如 `deepseek-chat`)。"
+          },
+          "fusi-tools.aiCommit.prompt": {
+            "type": "string",
+            "default": "",
+            "order": 4,
+            "markdownDescription": "自定义系统提示词 (覆盖默认设置)。支持 Markdown 格式。"
+          }
+        }
+      },
+      {
+        "title": "FT: Resource Manager",
+        "properties": {
+          "fusi-tools.resourceManager.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **Resource Manager** 功能 (需要重启)。\n\n包括 `Copy Name`, `Generate Tree` 等命令。"
+          }
+        }
+      },
+      {
+        "title": "FT: Smart Translate",
+        "properties": {
+          "fusi-tools.smartTranslate.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用/禁用 **智能翻译** 功能 (选中代码自动翻译/命名)。"
+          },
+          "fusi-tools.smartTranslate.displayDuration": {
+            "type": "number",
+            "default": 5000,
+            "order": 1,
+            "markdownDescription": "翻译结果显示时长 (毫秒)。"
+          },
+          "fusi-tools.smartTranslate.statusBarPosition": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right"
+            ],
+            "default": "right",
+            "order": 2,
+            "markdownDescription": "翻译状态栏位置。",
+            "enumDescriptions": [
+              "显示在状态栏左侧",
+              "显示在状态栏右侧"
+            ]
+          }
+        }
+      },
+      {
+        "title": "FT: Project Favorites",
+        "properties": {
+          "fusi-tools.projectFavorites.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用/禁用 **项目常用文件 (Project Favorites)** 功能。"
+          }
+        }
+      },
+      {
+        "title": "FT: Scratchpad",
+        "properties": {
+          "fusi-tools.scratchpad.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **随手记 (Scratchpad)** 功能。"
+          }
         }
       }
-    },
+    ],
     "viewsContainers": {
       "activitybar": [
         {

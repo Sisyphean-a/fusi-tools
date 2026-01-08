@@ -8,6 +8,14 @@ import { Logger } from "../../logger";
 export function activate(context: vscode.ExtensionContext) {
   Logger.info("Activating Resource Manager...");
 
+  const config = vscode.workspace.getConfiguration("fusi-tools");
+  const enabled = config.get<boolean>("resourceManager.enabled", true);
+
+  if (!enabled) {
+    Logger.info("Resource Manager is disabled by configuration.");
+    return;
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "fusi-tools.copyName",

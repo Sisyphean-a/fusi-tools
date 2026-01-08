@@ -5,6 +5,14 @@ import { AiService } from "./ai";
 import { AiCommitViewProvider, CommitItem } from "./treeProvider";
 
 export function activate(context: vscode.ExtensionContext) {
+  const config = vscode.workspace.getConfiguration("fusi-tools");
+  const enabled = config.get<boolean>("aiCommit.enabled", true);
+
+  if (!enabled) {
+    Logger.info("AI Commit is disabled by configuration.");
+    return;
+  }
+
   const gitService = new GitService();
   const aiService = new AiService();
   const provider = new AiCommitViewProvider();
