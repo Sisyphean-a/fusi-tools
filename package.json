@@ -205,6 +205,21 @@
         "title": "刷新",
         "icon": "$(refresh)",
         "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.copyName",
+        "title": "复制文件名 (Copy Name)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.copyRelativeName",
+        "title": "复制相对路径 (@Copy Name)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.generateTree",
+        "title": "生成目录结构树 (Generate Tree)",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {
@@ -272,6 +287,21 @@
           "command": "fusi-tools.projectFavorites.addFile",
           "group": "7_modification",
           "when": "resourceScheme == file || resourceScheme == folder"
+        },
+        {
+          "command": "fusi-tools.copyName",
+          "group": "5_cutcopypaste",
+          "when": "resourceScheme == file || resourceScheme == folder"
+        },
+        {
+          "command": "fusi-tools.copyRelativeName",
+          "group": "5_cutcopypaste",
+          "when": "resourceScheme == file || resourceScheme == folder"
+        },
+        {
+          "command": "fusi-tools.generateTree",
+          "group": "7_modification",
+          "when": "explorerResourceIsFolder"
         }
       ],
       "editor/title/context": [

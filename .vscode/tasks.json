@@ -6,7 +6,21 @@
             "script": "watch",
             "group": "build",
             "isBackground": true,
-            "problemMatcher": "$tsc-watch",
+            "problemMatcher": {
+                "owner": "webpack",
+                "pattern": {
+                    "regexp": "^([^\\s].*)\\((\\d+),(\\d+)\\):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^\\[webpack-cli\\] Compiler starting",
+                    "endsPattern": "webpack .*? compiled successfully"
+                }
+            },
             "label": "npm: watch"
         },
         {
