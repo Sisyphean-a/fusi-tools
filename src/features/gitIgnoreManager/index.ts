@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { IgnoreStateManager } from './ignoreState';
 import { IgnoreViewProvider, registerTreeView } from './ignoreViewProvider';
-import { CommandHandlers, registerCommands } from './commandHandlers';
+import { CommandHandlers } from './commandHandlers';
 import * as gitService from './gitService';
 import * as config from './configuration';
 import { Logger } from '../../logger';
@@ -53,9 +53,6 @@ export function activate(context: vscode.ExtensionContext): void {
     // 创建命令处理器
     commandHandlers = new CommandHandlers(stateManager, treeView);
 
-    // 注册所有命令
-    registerCommands(context, commandHandlers);
-
     // 监听配置变化
     context.subscriptions.push(
       config.onConfigurationChanged(() => {
@@ -84,26 +81,53 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // 为命令注册占位符，实际执行时才初始化
-  const commandsToRegister = [
-    'fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged',
-    'fusi-tools.gitIgnoreManager.ignoreSkipWorktree',
-    'fusi-tools.gitIgnoreManager.showIgnored',
-    'fusi-tools.gitIgnoreManager.unignore',
-    'fusi-tools.gitIgnoreManager.refresh'
-  ];
-
-  for (const commandId of commandsToRegister) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(commandId, async (...args: any[]) => {
-        // 确保已初始化
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged',
+      async (resourceState?: any) => {
         if (!isInitialized) {
           await lazyInitialize();
         }
-        // 执行实际命令
-        return vscode.commands.executeCommand(`${commandId}.internal`, ...args);
-      })
-    );
-  }
+        return commandHandlers?.ignoreAssumeUnchanged(resourceState);
+      }
+    ),
+    vscode.commands.registerCommand(
+      'fusi-tools.gitIgnoreManager.ignoreSkipWorktree',
+      async (resourceState?: any) => {
+        if (!isInitialized) {
+          await lazyInitialize();
+        }
+        return commandHandlers?.ignoreSkipWorktree(resourceState);
+      }
+    ),
+    vscode.commands.registerCommand(
+      'fusi-tools.gitIgnoreManager.showIgnored',
+      async () => {
+        if (!isInitialized) {
+          await lazyInitialize();
+        }
+        return commandHandlers?.showIgnored();
+      }
+    ),
+    vscode.commands.registerCommand(
+      'fusi-tools.gitIgnoreManager.unignore',
+      async (item?: any) => {
+        if (!isInitialized) {
+          await lazyInitialize();
+        }
+        return commandHandlers?.unignore(item);
+      }
+    ),
+    vscode.commands.registerCommand(
+      'fusi-tools.gitIgnoreManager.refresh',
+      async () => {
+        if (!isInitialized) {
+          await lazyInitialize();
+        }
+        return commandHandlers?.refresh();
+      }
+    )
+  );
 
   Logger.info('Git Ignore Manager: 已注册（延迟加载模式）');
 }

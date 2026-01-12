@@ -3,3 +3,10 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+
+# TypeScript 增量编译缓存
+*.tsbuildinfo
+
+# Webpack 缓存
+.cache/
+node_modules/.cache/
