@@ -125,6 +125,40 @@
             "markdownDescription": "启用或禁用 **随手记 (Scratchpad)** 功能。"
           }
         }
+      },
+      {
+        "title": "FT: Git Ignore Manager",
+        "properties": {
+          "fusi-tools.gitIgnoreManager.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **Git Ignore Manager** 功能 (需要重启)。\n\n管理 Git 的 `assume-unchanged` 和 `skip-worktree` 标记。"
+          },
+          "fusi-tools.gitIgnoreManager.refreshOnFocus": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "markdownDescription": "视图获得焦点时自动刷新忽略列表。"
+          },
+          "fusi-tools.gitIgnoreManager.defaultIgnoreType": {
+            "type": "string",
+            "enum": ["assume", "skip"],
+            "default": "assume",
+            "order": 2,
+            "markdownDescription": "新增忽略时的默认类型。",
+            "enumDescriptions": [
+              "使用 assume-unchanged 标记",
+              "使用 skip-worktree 标记"
+            ]
+          },
+          "fusi-tools.gitIgnoreManager.showCommandHints": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "markdownDescription": "在提示信息中显示 Git 命令。"
+          }
+        }
       }
     ],
     "viewsContainers": {
@@ -158,6 +192,12 @@
           "id": "fusi-tools.aiCommitView",
           "name": "AI 提交助手",
           "icon": "$(sparkle)"
+        },
+        {
+          "id": "fusi-tools.gitIgnoreManager.view",
+          "name": "忽略文件（Git）",
+          "icon": "$(circle-slash)",
+          "when": "config.fusi-tools.gitIgnoreManager.enabled"
         }
       ],
       "projectFavorites-container": [
@@ -260,6 +300,35 @@
         "command": "fusi-tools.generateTree",
         "title": "Generate Tree",
         "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
+        "title": "忽略文件 (Assume-Unchanged)",
+        "icon": "$(add)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitIgnoreManager.ignoreSkipWorktree",
+        "title": "忽略文件 (Skip-Worktree)",
+        "icon": "$(add)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitIgnoreManager.showIgnored",
+        "title": "显示忽略文件列表",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitIgnoreManager.unignore",
+        "title": "解除忽略",
+        "icon": "$(close)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitIgnoreManager.refresh",
+        "title": "刷新忽略列表",
+        "icon": "$(refresh)",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {
@@ -293,6 +362,11 @@
           "command": "fusi-tools.projectFavorites.moveToCategory",
           "when": "view == fusi-tools.projectFavorites.view && (viewItem == favoriteFile || viewItem == favoriteFolder)",
           "group": "inline"
+        },
+        {
+          "command": "fusi-tools.gitIgnoreManager.unignore",
+          "when": "view == fusi-tools.gitIgnoreManager.view && viewItem =~ /^ignoredFile/",
+          "group": "inline"
         }
       ],
       "view/title": [
@@ -320,6 +394,16 @@
           "command": "fusi-tools.projectFavorites.refresh",
           "when": "view == fusi-tools.projectFavorites.view",
           "group": "navigation"
+        },
+        {
+          "command": "fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
+          "when": "view == fusi-tools.gitIgnoreManager.view",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fusi-tools.gitIgnoreManager.refresh",
+          "when": "view == fusi-tools.gitIgnoreManager.view",
+          "group": "navigation@2"
         }
       ],
       "explorer/context": [
@@ -349,6 +433,18 @@
           "command": "fusi-tools.projectFavorites.addFile",
           "group": "7_modification",
           "when": "resourceScheme == file"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
+          "when": "scmProvider == git && config.fusi-tools.gitIgnoreManager.enabled",
+          "group": "1_ignore@1"
+        },
+        {
+          "command": "fusi-tools.gitIgnoreManager.ignoreSkipWorktree",
+          "when": "scmProvider == git && config.fusi-tools.gitIgnoreManager.enabled",
+          "group": "1_ignore@2"
         }
       ]
     }
