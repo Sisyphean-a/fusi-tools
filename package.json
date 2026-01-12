@@ -25,6 +25,25 @@
   "contributes": {
     "configuration": [
       {
+        "title": "FT: 通用设置",
+        "properties": {
+          "fusi-tools.logLevel": {
+            "type": "string",
+            "enum": ["debug", "info", "warn", "error", "none"],
+            "default": "info",
+            "order": 0,
+            "markdownDescription": "日志输出级别。\n\n- `debug`: 输出所有日志（包括调试信息）\n- `info`: 输出一般信息、警告和错误\n- `warn`: 仅输出警告和错误\n- `error`: 仅输出错误\n- `none`: 不输出任何日志",
+            "enumDescriptions": [
+              "调试模式 - 输出所有日志",
+              "信息模式 - 输出一般信息及以上",
+              "警告模式 - 仅输出警告和错误",
+              "错误模式 - 仅输出错误",
+              "静默模式 - 不输出任何日志"
+            ]
+          }
+        }
+      },
+      {
         "title": "FT: AI Commit",
         "properties": {
           "fusi-tools.aiCommit.enabled": {

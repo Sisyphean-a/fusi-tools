@@ -43,6 +43,11 @@ export class FavoritesManager {
   readonly onDidChangeTreeData: vscode.Event<
     void | FavoriteCategory | undefined
   > = this._onDidChangeTreeData.event;
+  
+  // 文件存在性缓存
+  private _fileExistenceCache: Map<string, { exists: boolean; timestamp: number }> = new Map();
+  private _cacheExpirationMs: number = 30000; // 30秒缓存过期时间
+  private _checkTimer: NodeJS.Timeout | undefined;
 
   constructor(context: vscode.ExtensionContext) {
     this._context = context;
@@ -73,8 +78,8 @@ export class FavoritesManager {
       this._data.files = {};
     }
 
-    // Check for ghost files on startup
-    this.checkFileExistence();
+    // 启动定期检查文件存在性
+    this.startPeriodicFileCheck();
   }
 
   private saveData() {
@@ -82,10 +87,90 @@ export class FavoritesManager {
     this._onDidChangeTreeData.fire();
   }
 
-  private checkFileExistence() {
-    // This is a lightweight check. For UI, we often check on render,
-    // but here we might want to flag things.
-    // Real-time checks happen when providing tree items.
+  /**
+   * 启动定期文件存在性检查（每分钟检查一次）
+   */
+  private startPeriodicFileCheck() {
+    // 立即执行一次检查
+    this.checkFileExistence();
+    
+    // 设置定期检查（每60秒）
+    this._checkTimer = setInterval(() => {
+      this.checkFileExistence();
+    }, 60000);
+  }
+
+  /**
+   * 批量检查所有文件的存在性
+   */
+  private async checkFileExistence() {
+    const fileIds = Object.keys(this._data.files);
+    
+    // 批量检查，避免阻塞
+    const checkPromises = fileIds.map(async (fileId) => {
+      const file = this._data.files[fileId];
+      if (!file) return;
+      
+      const absolutePath = this.resolvePath(file.path);
+      try {
+        await vscode.workspace.fs.stat(vscode.Uri.file(absolutePath));
+        this._fileExistenceCache.set(file.path, {
+          exists: true,
+          timestamp: Date.now()
+        });
+        file.exists = true;
+      } catch {
+        this._fileExistenceCache.set(file.path, {
+          exists: false,
+          timestamp: Date.now()
+        });
+        file.exists = false;
+      }
+    });
+
+    // 并发执行，但不等待全部完成（避免阻塞）
+    Promise.all(checkPromises).catch(err => {
+      Logger.error("批量文件存在性检查失败", err);
+    });
+  }
+
+  /**
+   * 检查单个文件是否存在（带缓存）
+   */
+  public async checkFileExists(filePath: string): Promise<boolean> {
+    // 检查缓存
+    const cached = this._fileExistenceCache.get(filePath);
+    if (cached && (Date.now() - cached.timestamp) < this._cacheExpirationMs) {
+      return cached.exists;
+    }
+
+    // 缓存过期或不存在，重新检查
+    const absolutePath = this.resolvePath(filePath);
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.file(absolutePath));
+      this._fileExistenceCache.set(filePath, {
+        exists: true,
+        timestamp: Date.now()
+      });
+      return true;
+    } catch {
+      this._fileExistenceCache.set(filePath, {
+        exists: false,
+        timestamp: Date.now()
+      });
+      return false;
+    }
+  }
+
+  /**
+   * 清理资源
+   */
+  public dispose() {
+    if (this._checkTimer) {
+      clearInterval(this._checkTimer);
+      this._checkTimer = undefined;
+    }
+    this._fileExistenceCache.clear();
   }
 
   // --- Path Helpers ---
@@ -295,5 +380,22 @@ export class FavoritesManager {
 
   public handleFileDeletions(e: vscode.FileDeleteEvent) {
     Logger.info(`检测到文件删除: ${e.files.length} 个文件`);
+    
+    // 更新缓存
+    for (const uri of e.files) {
+      const relativePath = this.toRelativePath(uri.fsPath);
+      this._fileExistenceCache.set(relativePath, {
+        exists: false,
+        timestamp: Date.now()
+      });
+      
+      // 更新文件对象
+      for (const id in this._data.files) {
+        const file = this._data.files[id];
+        if (file.path === relativePath) {
+          file.exists = false;
+        }
+      }
+    }
   }
 }

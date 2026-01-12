@@ -8,6 +8,11 @@ export function activate(context: vscode.ExtensionContext) {
   Logger.info("正在激活项目常用文件功能...");
   const manager = new FavoritesManager(context);
   const provider = new FavoritesProvider(manager);
+  
+  // 注册清理函数
+  context.subscriptions.push({
+    dispose: () => manager.dispose()
+  });
 
   // Register Tree View
   const treeView = vscode.window.createTreeView(

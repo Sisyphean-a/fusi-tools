@@ -2,6 +2,7 @@ import * as https from "https";
 import { URL } from "url";
 import { LanguageDetector } from "./utils/languageDetector";
 import { TextProcessor } from "./utils/textProcessor";
+import { LRUCache } from "./utils/lruCache";
 
 export interface TranslationResult {
   originalText: string;
@@ -12,17 +13,19 @@ export interface TranslationResult {
 
 export class TranslatorService {
   private languageDetector: LanguageDetector;
-  private cache: Map<string, TranslationResult> = new Map();
+  private cache: LRUCache<string, TranslationResult>;
 
-  constructor() {
+  constructor(cacheSize: number = 200) {
     this.languageDetector = new LanguageDetector();
+    this.cache = new LRUCache(cacheSize);
   }
 
   async translate(text: string): Promise<TranslationResult> {
     // 检查缓存
     const cacheKey = text.toLowerCase().trim();
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey)!;
+    const cachedResult = this.cache.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
     }
 
     // 检测语言
@@ -61,16 +64,8 @@ export class TranslatorService {
         targetLanguage,
       };
 
-      // 缓存结果
+      // 缓存结果（LRU 缓存会自动管理大小）
       this.cache.set(cacheKey, result);
-
-      // 限制缓存大小
-      if (this.cache.size > 100) {
-        const firstKey = this.cache.keys().next().value;
-        if (firstKey) {
-          this.cache.delete(firstKey);
-        }
-      }
 
       return result;
     } catch (error) {

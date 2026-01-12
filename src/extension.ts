@@ -11,7 +11,20 @@ import { Logger } from "./logger";
  * 扩展激活时调用
  */
 export function activate(context: vscode.ExtensionContext) {
+  // 从配置中加载日志级别
+  Logger.loadLogLevelFromConfig();
+  
   Logger.info("Fusi Tools is activating...");
+  
+  // 监听配置变化，动态更新日志级别
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("fusi-tools.logLevel")) {
+        Logger.loadLogLevelFromConfig();
+        Logger.info("日志级别已更新");
+      }
+    })
+  );
 
   // 注册 Scratchpad 视图提供者
   registerScratchpad(context);

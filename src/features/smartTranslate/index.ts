@@ -18,6 +18,7 @@ let selectionDebounceTimer: NodeJS.Timeout | undefined;
 let lastSelectionText: string = "";
 let disposables: vscode.Disposable[] = [];
 let isEnabled = false;
+let isProcessing = false; // 防止并发处理
 
 export function activate(context: vscode.ExtensionContext) {
   Logger.info("智能翻译功能正在初始化...");
@@ -139,7 +140,7 @@ function stopFeature() {
 async function handleSelectionChange(
   event: vscode.TextEditorSelectionChangeEvent
 ) {
-  if (!isEnabled || event.selections.length === 0) {
+  if (!isEnabled || event.selections.length === 0 || isProcessing) {
     return;
   }
 
@@ -153,10 +154,16 @@ async function handleSelectionChange(
     return;
   }
 
-  // 使用防抖机制，延迟处理选择事件
+  // 使用防抖机制，延迟处理选择事件（增加到 500ms 以减少频繁触发）
   selectionDebounceTimer = setTimeout(async () => {
-    // Logger.info(`Processing selection change (debounced). Empty: ${selection.isEmpty}`);
+    // 防止并发处理
+    if (isProcessing) {
+      return;
+    }
+
     try {
+      isProcessing = true;
+
       // 再次检查选择是否仍然有效
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
@@ -168,18 +175,15 @@ async function handleSelectionChange(
         return;
       }
 
-      // 获取选中的文本
-      const selectedText = await getSelectedTextSafely(
-        editor,
-        currentSelection
-      );
+      // 获取选中的文本（简化版本，移除重试机制）
+      const selectedText = editor.document.getText(currentSelection).trim();
 
+      // 早期过滤：检查文本长度和有效性
       if (
         selectedText &&
         selectedText.length > 0 &&
         selectedText.length < 500
       ) {
-        // Logger.info(`Selected text found: "${selectedText.substring(0, 20)}..."`);
         // 避免重复翻译相同的文本
         if (selectedText !== lastSelectionText) {
           Logger.info(
@@ -191,38 +195,13 @@ async function handleSelectionChange(
       }
     } catch (error) {
       console.error("Selection processing error:", error);
+    } finally {
+      isProcessing = false;
     }
-  }, 300); // 300ms 防抖延迟
+  }, 500); // 增加到 500ms 防抖延迟
 }
 
-async function getSelectedTextSafely(
-  editor: vscode.TextEditor,
-  selection: vscode.Selection,
-  maxRetries: number = 3
-): Promise<string> {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      if (selection.isEmpty) return "";
-
-      const text = editor.document.getText(selection);
-      const trimmedText = text.trim();
-
-      if (trimmedText.length === 0) {
-        if (attempt < maxRetries - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          continue;
-        }
-        return "";
-      }
-      return trimmedText;
-    } catch (error) {
-      if (attempt < maxRetries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-    }
-  }
-  return "";
-}
+// 移除不必要的重试机制函数（已在 handleSelectionChange 中简化）
 
 async function translateSelectedText(text: string): Promise<void> {
   if (!translatorService || !statusBarManager) {
