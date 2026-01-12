@@ -433,6 +433,16 @@
           "command": "fusi-tools.projectFavorites.addFile",
           "group": "7_modification",
           "when": "resourceScheme == file"
+        },
+        {
+          "command": "fusi-tools.copyName",
+          "group": "5_cutcopypaste",
+          "when": "resourceScheme == file"
+        },
+        {
+          "command": "fusi-tools.copyRelativeName",
+          "group": "5_cutcopypaste",
+          "when": "resourceScheme == file"
         }
       ],
       "scm/resourceState/context": [
