@@ -41,26 +41,26 @@ export class IgnoreStateManager {
      * 从所有仓库加载忽略文件列表
      */
     async loadAll(repos: string[]): Promise<void> {
-        const allFiles: IgnoredFile[] = [];
         const timestamp = Date.now();
 
-        for (const repoRoot of repos) {
-            try {
-                const ignoredFiles = await gitService.listIgnoredFiles(repoRoot);
-                for (const file of ignoredFiles) {
-                    allFiles.push({
+        const results = await Promise.all(
+            repos.map(async (repoRoot) => {
+                try {
+                    const ignoredFiles = await gitService.listIgnoredFiles(repoRoot);
+                    return ignoredFiles.map<IgnoredFile>((file) => ({
                         repoRoot,
                         relPath: file.relPath,
                         type: file.type,
-                        timestamp
-                    });
+                        timestamp,
+                    }));
+                } catch (error) {
+                    console.error(`加载仓库 ${repoRoot} 的忽略列表失败:`, error);
+                    return [];
                 }
-            } catch (error) {
-                console.error(`加载仓库 ${repoRoot} 的忽略列表失败:`, error);
-            }
-        }
+            })
+        );
 
-        this.files = allFiles;
+        this.files = results.flat();
         this._onDidChange.fire();
     }
 
