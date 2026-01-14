@@ -148,8 +148,10 @@ export async function getAllRepoRoots(): Promise<string[]> {
     const roots: string[] = [];
     const seen = new Set<string>();
 
-    for (const folder of folders) {
-        const root = await getRepoRoot(folder.uri.fsPath);
+    const rootPromises = folders.map(folder => getRepoRoot(folder.uri.fsPath));
+    const results = await Promise.all(rootPromises);
+
+    for (const root of results) {
         if (root && !seen.has(root)) {
             roots.push(root);
             seen.add(root);
