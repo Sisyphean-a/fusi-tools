@@ -107,29 +107,40 @@ export class FavoritesManager {
     const fileIds = Object.keys(this._data.files);
     
     // 批量检查，避免阻塞
+    let hasChanges = false;
     const checkPromises = fileIds.map(async (fileId) => {
       const file = this._data.files[fileId];
       if (!file) return;
       
       const absolutePath = this.resolvePath(file.path);
+      let exists = false;
       try {
         await vscode.workspace.fs.stat(vscode.Uri.file(absolutePath));
         this._fileExistenceCache.set(file.path, {
           exists: true,
           timestamp: Date.now()
         });
-        file.exists = true;
+        exists = true;
       } catch {
         this._fileExistenceCache.set(file.path, {
           exists: false,
           timestamp: Date.now()
         });
-        file.exists = false;
+        exists = false;
+      }
+
+      if (file.exists !== exists) {
+        file.exists = exists;
+        hasChanges = true;
       }
     });
 
     // 并发执行，但不等待全部完成（避免阻塞）
-    Promise.all(checkPromises).catch(err => {
+    Promise.all(checkPromises).then(() => {
+      if (hasChanges) {
+        this._onDidChangeTreeData.fire();
+      }
+    }).catch(err => {
       Logger.error("批量文件存在性检查失败", err);
     });
   }
