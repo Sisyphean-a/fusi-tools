@@ -50,7 +50,7 @@ export class GitService {
     // [Fix] 使用 git diff --name-status 获取准确的文件状态，避免 API 状态码映射问题
     const statusMap = await this.getIndexStatuses(rootPath);
 
-    for (const change of changes) {
+    const promises = changes.map(async (change) => {
       const uri = change.uri;
       const relativePath = path
         .relative(rootPath, uri.fsPath)
@@ -59,7 +59,7 @@ export class GitService {
 
       // A. 文件过多模式 -> 强制简略
       if (isTooManyFiles) {
-        results.push({
+        return {
           relativePath,
           status: "TRUNCATED",
           content: "[Pre-check] Too many files, content skipped.",
@@ -67,8 +67,7 @@ export class GitService {
           deletions: 0,
           chars: 0,
           tokens: 0,
-        });
-        continue;
+        } as SmartChange;
       }
 
       // 获取准确状态 (默认为 M)
@@ -76,17 +75,16 @@ export class GitService {
       const gitStatus = statusMap.get(relativePath) || "M";
 
       // B. 正常分析
-      const changeResult = await this.processSingleChange(
+      return this.processSingleChange(
         change,
         rootPath,
         relativePath,
         fileName,
         gitStatus
       );
-      results.push(changeResult);
-    }
+    });
 
-    return results;
+    return Promise.all(promises);
   }
 
   /**
