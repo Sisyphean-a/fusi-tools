@@ -29,7 +29,13 @@
         "properties": {
           "fusi-tools.logLevel": {
             "type": "string",
-            "enum": ["debug", "info", "warn", "error", "none"],
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error",
+              "none"
+            ],
             "default": "info",
             "order": 0,
             "markdownDescription": "日志输出级别。\n\n- `debug`: 输出所有日志（包括调试信息）\n- `info`: 输出一般信息、警告和错误\n- `warn`: 仅输出警告和错误\n- `error`: 仅输出错误\n- `none`: 不输出任何日志",
@@ -162,7 +168,10 @@
           },
           "fusi-tools.gitIgnoreManager.defaultIgnoreType": {
             "type": "string",
-            "enum": ["assume", "skip"],
+            "enum": [
+              "assume",
+              "skip"
+            ],
             "default": "assume",
             "order": 2,
             "markdownDescription": "新增忽略时的默认类型。",
