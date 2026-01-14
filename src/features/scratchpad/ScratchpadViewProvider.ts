@@ -10,6 +10,7 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
   private _content: string = "";
+  private _htmlCache: string | undefined;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -59,6 +60,11 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async _updateWebviewHtml(webviewView: vscode.WebviewView) {
+    if (this._htmlCache) {
+      webviewView.webview.html = this._htmlCache;
+      return;
+    }
+
     const htmlUri = vscode.Uri.joinPath(
       this._extensionUri,
       "src",
@@ -69,6 +75,7 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
     try {
       const uint8Array = await vscode.workspace.fs.readFile(htmlUri);
       const htmlContent = new TextDecoder().decode(uint8Array);
+      this._htmlCache = htmlContent;
       webviewView.webview.html = htmlContent;
     } catch (error) {
       Logger.error(`读取 Scratchpad HTML 失败: ${error}`);
