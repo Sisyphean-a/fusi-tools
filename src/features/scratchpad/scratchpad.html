@@ -38,13 +38,24 @@
         const vscode = acquireVsCodeApi();
         const textarea = document.getElementById('scratchpad');
 
+        // Debounce function
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
         // 监听内容变化
-        textarea.addEventListener('input', () => {
+        const onInput = debounce(() => {
             vscode.postMessage({
                 type: 'contentChanged',
                 content: textarea.value
             });
-        });
+        }, 300);
+
+        textarea.addEventListener('input', onInput);
 
         // 接收来自扩展的消息
         window.addEventListener('message', (event) => {
