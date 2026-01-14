@@ -72,7 +72,8 @@ export class FavoritesProvider implements vscode.TreeDataProvider<TreeElement> {
       // It's a Favorite File (Root item in standard view)
       const { file, categoryId } = element;
       const absolutePath = this.manager.resolvePath(file.path);
-      const exists = fs.existsSync(absolutePath);
+      // Use cached existence status (optimistic default to true) to avoid blocking sync I/O
+      const exists = file.exists ?? true;
 
       const item = new vscode.TreeItem(
         file.alias || path.basename(absolutePath)
