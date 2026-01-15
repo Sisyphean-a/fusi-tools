@@ -27,13 +27,22 @@
             resize: none;
             padding: 8px;
         }
+        textarea:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
         textarea::placeholder {
             color: var(--vscode-input-placeholderForeground);
         }
     </style>
 </head>
 <body>
-    <textarea id="scratchpad" placeholder="Type your notes here..."></textarea>
+    <textarea
+        id="scratchpad"
+        aria-label="Scratchpad Input"
+        placeholder="Scratchpad: Type your temporary notes here... (Content is cleared on reload)"
+        spellcheck="false"
+    ></textarea>
     <script>
         const vscode = acquireVsCodeApi();
         const textarea = document.getElementById('scratchpad');
