@@ -15,9 +15,14 @@
             height: 100%;
             overflow: hidden;
         }
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--vscode-editor-background);
+        }
         textarea {
+            flex: 1;
             width: 100%;
-            height: 100vh;
             background-color: var(--vscode-editor-background);
             color: var(--vscode-editor-foreground);
             font-family: var(--vscode-editor-font-family);
@@ -34,6 +39,43 @@
         textarea::placeholder {
             color: var(--vscode-input-placeholderForeground);
         }
+        .footer {
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--vscode-widget-border);
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            background-color: var(--vscode-editor-background);
+        }
+        .char-count {
+            font-family: var(--vscode-font-family);
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-clear {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--vscode-button-foreground);
+            background-color: var(--vscode-button-secondaryBackground);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-clear:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        .btn-clear:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 1px;
+        }
     </style>
 </head>
 <body>
@@ -43,9 +85,19 @@
         placeholder="Scratchpad: Type your temporary notes here... (Content is cleared on reload)"
         spellcheck="false"
     ></textarea>
+    <div class="footer">
+        <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
+        <div class="actions">
+            <button id="btn-clear" class="btn-clear" aria-label="Clear Scratchpad">
+                Clear
+            </button>
+        </div>
+    </div>
     <script>
         const vscode = acquireVsCodeApi();
         const textarea = document.getElementById('scratchpad');
+        const charCount = document.getElementById('char-count');
+        const btnClear = document.getElementById('btn-clear');
 
         // Debounce function
         function debounce(func, delay) {
@@ -56,6 +108,11 @@
             };
         }
 
+        function updateCharCount() {
+            const length = textarea.value.length;
+            charCount.textContent = `${length} char${length !== 1 ? 's' : ''}`;
+        }
+
         // 监听内容变化
         const onInput = debounce(() => {
             vscode.postMessage({
@@ -64,7 +121,19 @@
             });
         }, 300);
 
-        textarea.addEventListener('input', onInput);
+        textarea.addEventListener('input', () => {
+            updateCharCount();
+            onInput();
+        });
+
+        btnClear.addEventListener('click', () => {
+            if (textarea.value.length > 0) {
+                textarea.value = '';
+                updateCharCount();
+                onInput();
+                textarea.focus();
+            }
+        });
 
         // 接收来自扩展的消息
         window.addEventListener('message', (event) => {
@@ -72,6 +141,7 @@
             switch (message.type) {
                 case 'restoreContent':
                     textarea.value = message.content;
+                    updateCharCount();
                     break;
             }
         });
