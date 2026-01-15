@@ -50,7 +50,7 @@ export class GitService {
     // [Fix] 使用 git diff --name-status 获取准确的文件状态，避免 API 状态码映射问题
     const statusMap = await this.getIndexStatuses(rootPath);
 
-    const promises = changes.map(async (change) => {
+    const promises = changes.map(async (change: any) => {
       const uri = change.uri;
       const relativePath = path
         .relative(rootPath, uri.fsPath)
