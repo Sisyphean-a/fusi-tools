@@ -5,6 +5,7 @@ import * as smartTranslate from "./features/smartTranslate";
 import * as projectFavorites from "./features/projectFavorites";
 import * as resourceManager from "./features/resourceManager";
 import * as gitIgnoreManager from "./features/gitIgnoreManager";
+import * as gitWorktree from "./features/gitWorktree";
 import { Logger } from "./logger";
 
 /**
@@ -43,6 +44,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 激活 Git Ignore Manager
   gitIgnoreManager.activate(context);
+
+  // 激活 Git Worktree 管理
+  gitWorktree.activate(context);
 
   // Hello World 命令（示例）
   const disposable = vscode.commands.registerCommand(

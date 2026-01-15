@@ -187,6 +187,17 @@
             "markdownDescription": "在提示信息中显示 Git 命令。"
           }
         }
+      },
+      {
+        "title": "FT: Git Worktree",
+        "properties": {
+          "fusi-tools.gitWorktree.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **Git 工作树管理** 功能 (需要重启)。\\n\\n管理 Git Worktrees，支持快速切换和操作。"
+          }
+        }
       }
     ],
     "viewsContainers": {
@@ -226,6 +237,13 @@
           "name": "忽略文件（Git）",
           "icon": "$(circle-slash)",
           "when": "config.fusi-tools.gitIgnoreManager.enabled"
+        },
+        {
+          "id": "fusi-tools.gitWorktree.view",
+          "name": "工作树 (Worktrees)",
+          "icon": "$(git-branch)",
+          "when": "config.fusi-tools.gitWorktree.enabled",
+          "visibility": "collapsed"
         }
       ],
       "projectFavorites-container": [
@@ -357,6 +375,42 @@
         "title": "刷新忽略列表",
         "icon": "$(refresh)",
         "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.refresh",
+        "title": "刷新工作树列表",
+        "icon": "$(refresh)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.openIntegratedTerminal",
+        "title": "在内置终端中打开",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.openExternalTerminal",
+        "title": "在外部终端中打开",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.pull",
+        "title": "Pull",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.push",
+        "title": "Push",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.revealInExplorer",
+        "title": "在文件夹中打开",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.openInVsCode",
+        "title": "在当前编辑器中打开",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {
@@ -432,6 +486,11 @@
           "command": "fusi-tools.gitIgnoreManager.refresh",
           "when": "view == fusi-tools.gitIgnoreManager.view",
           "group": "navigation@2"
+        },
+        {
+          "command": "fusi-tools.gitWorktree.refresh",
+          "when": "view == fusi-tools.gitWorktree.view",
+          "group": "navigation"
         }
       ],
       "explorer/context": [
