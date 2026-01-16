@@ -76,6 +76,13 @@
             outline: 1px solid var(--vscode-focusBorder);
             outline-offset: 1px;
         }
+        .btn-clear.confirm {
+            background-color: var(--vscode-button-destructiveBackground);
+            color: var(--vscode-button-destructiveForeground);
+        }
+        .btn-clear.confirm:hover {
+            background-color: var(--vscode-button-destructiveHoverBackground);
+        }
     </style>
 </head>
 <body>
@@ -88,7 +95,7 @@
     <div class="footer">
         <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
         <div class="actions">
-            <button id="btn-clear" class="btn-clear" aria-label="Clear Scratchpad">
+            <button id="btn-clear" class="btn-clear" aria-label="Clear Scratchpad" title="Clear all content">
                 Clear
             </button>
         </div>
@@ -98,6 +105,7 @@
         const textarea = document.getElementById('scratchpad');
         const charCount = document.getElementById('char-count');
         const btnClear = document.getElementById('btn-clear');
+        let clearTimeoutId;
 
         // Debounce function
         function debounce(func, delay) {
@@ -111,6 +119,17 @@
         function updateCharCount() {
             const length = textarea.value.length;
             charCount.textContent = `${length} char${length !== 1 ? 's' : ''}`;
+        }
+
+        function resetClearButton() {
+            if (clearTimeoutId) {
+                clearTimeout(clearTimeoutId);
+                clearTimeoutId = null;
+            }
+            btnClear.textContent = 'Clear';
+            btnClear.classList.remove('confirm');
+            btnClear.setAttribute('aria-label', 'Clear Scratchpad');
+            btnClear.dataset.state = 'idle';
         }
 
         // 监听内容变化
@@ -127,13 +146,28 @@
         });
 
         btnClear.addEventListener('click', () => {
-            if (textarea.value.length > 0) {
+            if (textarea.value.length === 0) return;
+
+            if (btnClear.dataset.state !== 'confirm') {
+                // First click: Request confirmation
+                btnClear.textContent = 'Confirm?';
+                btnClear.classList.add('confirm');
+                btnClear.setAttribute('aria-label', 'Confirm Clear Scratchpad');
+                btnClear.dataset.state = 'confirm';
+
+                // Reset after 3 seconds
+                clearTimeoutId = setTimeout(resetClearButton, 3000);
+            } else {
+                // Second click: Perform action
                 textarea.value = '';
                 updateCharCount();
                 onInput();
                 textarea.focus();
+                resetClearButton();
             }
         });
+
+        textarea.addEventListener('focus', resetClearButton);
 
         // 接收来自扩展的消息
         window.addEventListener('message', (event) => {
