@@ -348,6 +348,11 @@
         "category": "Fusi Tools"
       },
       {
+        "command": "fusi-tools.copyFile",
+        "title": "Copy File",
+        "category": "Fusi Tools"
+      },
+      {
         "command": "fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
         "title": "忽略文件 (Assume-Unchanged)",
         "icon": "$(add)",
@@ -495,40 +500,50 @@
       ],
       "explorer/context": [
         {
-          "command": "fusi-tools.projectFavorites.addFile",
-          "group": "7_modification",
-          "when": "resourceScheme == file || resourceScheme == folder"
-        },
-        {
           "command": "fusi-tools.copyName",
-          "group": "5_cutcopypaste",
+          "group": "fusi-tools@1",
           "when": "resourceScheme == file || resourceScheme == folder"
         },
         {
           "command": "fusi-tools.copyRelativeName",
-          "group": "5_cutcopypaste",
+          "group": "fusi-tools@2",
           "when": "resourceScheme == file || resourceScheme == folder"
         },
         {
+          "command": "fusi-tools.copyFile",
+          "group": "fusi-tools@3",
+          "when": "resourceScheme == file && !explorerResourceIsFolder"
+        },
+        {
           "command": "fusi-tools.generateTree",
-          "group": "7_modification",
+          "group": "fusi-tools@4",
           "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.addFile",
+          "group": "fusi-tools@5",
+          "when": "resourceScheme == file || resourceScheme == folder"
         }
       ],
       "editor/title/context": [
         {
-          "command": "fusi-tools.projectFavorites.addFile",
-          "group": "7_modification",
-          "when": "resourceScheme == file"
-        },
-        {
           "command": "fusi-tools.copyName",
-          "group": "5_cutcopypaste",
+          "group": "fusi-tools@1",
           "when": "resourceScheme == file"
         },
         {
           "command": "fusi-tools.copyRelativeName",
-          "group": "5_cutcopypaste",
+          "group": "fusi-tools@2",
+          "when": "resourceScheme == file"
+        },
+        {
+          "command": "fusi-tools.copyFile",
+          "group": "fusi-tools@3",
+          "when": "resourceScheme == file"
+        },
+        {
+          "command": "fusi-tools.projectFavorites.addFile",
+          "group": "fusi-tools@4",
           "when": "resourceScheme == file"
         }
       ],

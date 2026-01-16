@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as cp from "child_process";
+import * as os from "os";
 import { TreeGenerator } from "./treeGenerator";
 import { Logger } from "../../logger";
 
@@ -109,6 +111,82 @@ export class ResourceCommands {
     } catch (error) {
       Logger.error("生成目录树失败", error);
       vscode.window.showErrorMessage("生成目录树失败。");
+    }
+  }
+
+  /**
+   * 复制文件到系统剪贴板
+   * @param uri 选中的资源 URI
+   */
+  public static async copyFile(uri: vscode.Uri) {
+    if (!uri) {
+      return;
+    }
+
+    const filePath = uri.fsPath;
+    const platform = os.platform();
+
+    try {
+      if (platform === "win32") {
+        // Windows: 使用简化的 PowerShell 单行命令
+        const escapedPath = filePath.replace(/'/g, "''");
+        const psCommand = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@('${escapedPath}'))`;
+        
+        await new Promise<void>((resolve, reject) => {
+          cp.exec(
+            `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
+            (error) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve();
+              }
+            }
+          );
+        });
+      } else if (platform === "darwin") {
+        // macOS: 使用 osascript (AppleScript)
+        // 路径转义：反斜杠和双引号
+        const escapedPath = filePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        const appleScript = `set the clipboard to (POSIX file "${escapedPath}") as «class furl»`;
+        
+        await new Promise<void>((resolve, reject) => {
+          cp.exec(`osascript -e '${appleScript}'`, (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        });
+      } else if (platform === "linux") {
+        // Linux: 使用 shell 回退机制，一次调用尝试两个工具
+        const escapedPath = filePath.replace(/'/g, "'\\''");
+        const cmd = `(echo -n 'file://${escapedPath}' | xclip -selection clipboard -t text/uri-list 2>/dev/null) || (echo -n 'file://${escapedPath}' | wl-copy 2>/dev/null)`;
+        
+        await new Promise<void>((resolve, reject) => {
+          cp.exec(cmd, (error, stdout, stderr) => {
+            // 只要其中一个成功就算成功（通过 || 实现）
+            // 检查是否真的失败：两个命令都失败才报错
+            if (error && error.code !== 0) {
+              reject(new Error("需要安装 xclip 或 wl-copy 工具"));
+            } else {
+              resolve();
+            }
+          });
+        });
+      } else {
+        throw new Error(`不支持的操作系统: ${platform}`);
+      }
+
+      const fileName = path.basename(filePath);
+      vscode.window.showInformationMessage(`文件已复制到剪贴板: ${fileName}`);
+      Logger.info(`已复制文件到剪贴板: ${filePath}`);
+    } catch (error) {
+      Logger.error("复制文件到剪贴板失败", error);
+      vscode.window.showErrorMessage(
+        `复制文件失败: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 }

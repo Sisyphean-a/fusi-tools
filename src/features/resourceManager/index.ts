@@ -34,6 +34,12 @@ export function activate(context: vscode.ExtensionContext) {
       (uri: vscode.Uri) => {
         ResourceCommands.generateTree(uri);
       }
+    ),
+    vscode.commands.registerCommand(
+      "fusi-tools.copyFile",
+      (uri: vscode.Uri) => {
+        ResourceCommands.copyFile(uri);
+      }
     )
   );
 
