@@ -15,10 +15,15 @@ export class AiService {
 
   /**
    * 执行生成策略:
-   * 1. 发起快速请求 (V3) 生成 "Concise" (简短) + "Conventional" (规范) 风格。
-   * 2. 数据可用时立即调用 onUpdate。
+   * 1. 发起快速请求 (V3) 生成结果。
+   * 2. 注入 Project Meta 和 Recent Commits 上下文。
    */
-  async generate(diff: string, onUpdate: (options: CommitOption[]) => void) {
+  async generate(
+    diff: string, 
+    projectMeta: string,
+    recentCommits: string[],
+    onUpdate: (options: CommitOption[]) => void
+  ) {
     const apiKey = this.config.get<string>("apiKey");
     const baseUrl = this.config.get<string>("baseUrl");
     const fastModel = this.config.get<string>("model") || "deepseek-chat";
@@ -28,21 +33,38 @@ export class AiService {
     }
 
     try {
+      // 准备 System Prompt 注入
+      let systemPrompt = FAST_PROMPT;
+      
+      // 注入 Project Meta
+      systemPrompt = systemPrompt.replace("{{PROJECT_META}}", projectMeta || "(None)");
+
+      // 注入 Recent Commits
+      const commitsStr = recentCommits.length > 0 
+        ? recentCommits.map(c => `- ${c}`).join("\n")
+        : "(None)";
+      systemPrompt = systemPrompt.replace("{{RECENT_COMMITS}}", commitsStr);
+
       const options = await this.fetchFastOptions(
         baseUrl!,
         apiKey,
         fastModel,
+        systemPrompt,
         diff
       );
+      
+      this.sortOptions(options);
       onUpdate(options);
     } catch (err) {
       Logger.error("快速模型 (Fast Model) 请求失败", err);
       console.error("快速模型失败:", err);
+      throw err; // Re-throw to let upstream handle UI error
     }
   }
 
   private sortOptions(options: CommitOption[]) {
-    const order = ["Emoji", "Conventional", "StandardShort", "Smart"];
+    // Define sort order
+    const order = ["Emoji", "StandardShort", "Conventional", "Historical", "Smart"];
     options.sort((a, b) => {
       let ia = order.indexOf(a.type);
       let ib = order.indexOf(b.type);
@@ -56,9 +78,10 @@ export class AiService {
     baseUrl: string,
     apiKey: string,
     model: string,
+    systemPrompt: string,
     diff: string
   ): Promise<CommitOption[]> {
-    return this.callApi(baseUrl, apiKey, model, FAST_PROMPT, diff);
+    return this.callApi(baseUrl, apiKey, model, systemPrompt, diff);
   }
 
   private async callApi(
@@ -77,10 +100,6 @@ export class AiService {
       stream: false,
     };
 
-    // [DEBUG] 打印完整请求参数
-    // console.log("--- [AI Commit Request Payload] ---");
-    // console.log(JSON.stringify(requestBody, null, 2));
-    // console.log("-----------------------------------");
     Logger.info(`[AI 请求] 模型: ${model}, 字符数: ${userContent.length}`);
 
     try {
@@ -105,8 +124,8 @@ export class AiService {
       return this.parseResponse(content);
     } catch (error) {
       Logger.error(`API 调用异常: ${model}`, error);
-      console.error(error);
-      return []; // Return empty on failure to not crash the whole Promise.all
+      // Don't swallow here, let caller handle
+      throw error;
     }
   }
 
@@ -120,13 +139,12 @@ export class AiService {
       if (Array.isArray(parsed)) {
         return parsed;
       } else if (typeof parsed === "object") {
-        // Should not happen with new prompts, but fallback
         return [parsed];
       }
       return [];
     } catch (e) {
       Logger.error("AI 响应解析失败", e);
-      console.error("Parse error", content);
+      console.error("Parse error content:", content);
       return [];
     }
   }

@@ -2,8 +2,8 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "npm",
-            "script": "watch",
+            "type": "shell",
+            "command": "npm run watch",
             "group": "build",
             "isBackground": true,
             "problemMatcher": {

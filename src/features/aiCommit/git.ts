@@ -31,8 +31,8 @@ export class GitService {
   }
 
   /**
-   * 1. 分析暂存区变更，返回结构化数据
-   */
+    * 1. 分析暂存区变更，返回结构化数据
+    */
   async analyzeChanges(): Promise<SmartChange[] | null> {
     const repo = this.repository;
     if (!repo) return null;
@@ -40,17 +40,23 @@ export class GitService {
     const changes = repo.state.indexChanges;
     if (changes.length === 0) return null;
 
-    const results: SmartChange[] = [];
     const rootPath = repo.rootUri.fsPath;
 
-    // 简单阈值判断
-    const MAX_FILES_FOR_DETAIL = 50;
+    // [Fix] 使用 git diff --name-status 获取准确的文件状态
+    const statusMap = await this.getIndexStatuses(rootPath);
+    
+    // [Optimization] 批量获取所有文件的 Diff，避免 N 次进程调用
+    console.time("git-bulk-diff");
+    const fullDiffMap = await this.getAllDiffs(rootPath);
+    console.timeEnd("git-bulk-diff");
+
+    const results: SmartChange[] = [];
+    
+    // 简单阈值判断 (即便有了批量 Diff，如果文件数极多，处理大量 DOM/TreeItem 依然可能慢，保留此检查作为一个软限制，但可以放宽)
+    const MAX_FILES_FOR_DETAIL = 100; 
     const isTooManyFiles = changes.length > MAX_FILES_FOR_DETAIL;
 
-    // [Fix] 使用 git diff --name-status 获取准确的文件状态，避免 API 状态码映射问题
-    const statusMap = await this.getIndexStatuses(rootPath);
-
-    const promises = changes.map(async (change: any) => {
+    for (const change of changes) {
       const uri = change.uri;
       const relativePath = path
         .relative(rootPath, uri.fsPath)
@@ -59,7 +65,7 @@ export class GitService {
 
       // A. 文件过多模式 -> 强制简略
       if (isTooManyFiles) {
-        return {
+        results.push({
           relativePath,
           status: "TRUNCATED",
           content: "[Pre-check] Too many files, content skipped.",
@@ -67,24 +73,25 @@ export class GitService {
           deletions: 0,
           chars: 0,
           tokens: 0,
-        } as SmartChange;
+        });
+        continue;
       }
 
-      // 获取准确状态 (默认为 M)
-      // git status output paths are strictly relative
       const gitStatus = statusMap.get(relativePath) || "M";
+      // 从 Map 中获取预先抓取的 Diff (如果有)
+      const cachedDiff = fullDiffMap.get(relativePath);
 
-      // B. 正常分析
-      return this.processSingleChange(
-        change,
+      const smartChange = await this.processSingleChange(
         rootPath,
         relativePath,
         fileName,
-        gitStatus
+        gitStatus,
+        cachedDiff
       );
-    });
+      results.push(smartChange);
+    }
 
-    return Promise.all(promises);
+    return results;
   }
 
   /**
@@ -93,7 +100,6 @@ export class GitService {
   private async getIndexStatuses(cwd: string): Promise<Map<string, string>> {
     const map = new Map<string, string>();
     try {
-      // --name-status return: "A\tfile.txt" or "R100\told.txt\tnew.txt"
       const output = await this.execCommand(
         "git diff --cached --name-status --no-renames",
         cwd
@@ -106,25 +112,94 @@ export class GitService {
       for (const line of lines) {
         const parts = line.split("\t");
         if (parts.length >= 2) {
-          const statusChar = parts[0].charAt(0).toUpperCase(); // A, M, D
-          const filePath = parts[parts.length - 1]; // Take the last part (file path)
+          const statusChar = parts[0].charAt(0).toUpperCase(); 
+          // parts[1] is path OR old_path new_path
           if (statusChar === "R") {
-            // parts[1] is old, parts[2] is new
             if (parts.length >= 3) {
-              map.set(parts[2], "A"); // Treat rename target as Added/Modified for content purposes
+              map.set(parts[2], "A"); // Treat rename target as Added
             }
           } else {
-            // A, M, D
-            // parts[1] is path
-            if (parts.length >= 2) {
-              map.set(parts[parts.length - 1], statusChar);
-            }
+             map.set(parts[parts.length - 1], statusChar);
           }
         }
       }
     } catch (e) {
       console.error("Failed to get index statuses", e);
     }
+    return map;
+  }
+
+  /**
+   * [Optimization] 一次性获取所有 Staged 文件的 Diff
+   * 返回 Map<relativePath, diffContent>
+   */
+  private async getAllDiffs(cwd: string): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    try {
+      // --no-color is crucial
+      // -U10000 is risky for huge files, default context (3 lines) is safer for summary?
+      // Actually standard diff (defaults to 3 lines context) is usually fine for AI.
+      // But if we want AI to see more code, maybe -U10? Let's stick to default for now to keep size small.
+      const output = await this.execCommand("git diff --cached --no-color", cwd);
+      
+      return this.parseDiffOutput(output);
+    } catch (e) {
+      console.error("Failed to get bulk diff", e);
+      return map;
+    }
+  }
+
+  /**
+   * 解析原生 Git Diff 输出，将其拆分为单独的文件块
+   */
+  private parseDiffOutput(fullOutput: string): Map<string, string> {
+    const map = new Map<string, string>();
+    
+    // Git diff format usually starts with:
+    // diff --git a/path/to/file b/path/to/file
+    const lines = fullOutput.split("\n");
+    let currentFile = "";
+    let currentBuffer: string[] = [];
+
+    // Helper to flush buffer
+    const flush = () => {
+      if (currentFile && currentBuffer.length > 0) {
+        map.set(currentFile, currentBuffer.join("\n"));
+      }
+    };
+
+    for (const line of lines) {
+      if (line.startsWith("diff --git ")) {
+        // Start of a new file
+        flush();
+        currentFile = "";
+        currentBuffer = [];
+
+        // Parse filename from "diff --git a/foo/bar.txt b/foo/bar.txt"
+        // Caution: logic needs to handle spaces in filenames carefully if possible.
+        // Simple regex strategy:
+        // diff --git a/(.*) b/(.*)
+        // usually a/ and b/ are the same unless renamed.
+        // We need the relative path that matches our other logic.
+        const match = line.match(/^diff --git a\/(.*) b\/(.*)$/);
+        if (match) {
+          // use the 'b' path as it represents the new state
+          currentFile = match[2]; 
+          // Note: git output might quote filenames with spaces or non-ascii. 
+          // E.g. "a/file with space.txt" or "\344\270\255\346\226\207.txt"
+          // This simple parser might fail on very complex paths (quoted octal), 
+          // but for 99% cases it works.
+          // Handling unquote is complex in JS without substantial libs.
+          // Let's assume standard paths for now.
+        }
+      }
+      
+      if (currentFile) {
+        currentBuffer.push(line);
+      }
+    }
+    
+    flush(); // Flush last file
     return map;
   }
 
@@ -141,30 +216,31 @@ export class GitService {
       (c) => c.status === "TRUNCATED" && c.content.includes("Too many files")
     );
     if (isTruncatedStructure) {
-      // 直接返回 Stat
       return this.getDiffStat(repo.rootUri.fsPath);
     }
 
     let totalOutput = "";
     let isStatFallback = false;
+    
+    // [Optimization] 提升 Token 限制至 200,000 字符 (适配 DeepSeek V3 128k context)
+    const MAX_CHARS = 200000;
 
     for (const change of changes) {
-      // 这里的 content 已经在 processSingleChange 里处理好了 (包括 [DELETED], [BINARY] 等)
-      // 我们只需要拼接
       let entry = "";
       if (
         change.status === "FULL" ||
         change.status === "TRUNCATED" ||
-        change.status === "新增(已截断)"
+        change.status === "新增(已截断)" ||
+        change.status === "完整" || 
+        change.status === "已截断" 
       ) {
-        // 只有 FULL/TRUNCATED/新增 可能包含 diff，其他都是一行描述
         entry = change.content;
       } else {
         entry = change.content; // e.g. [DELETED] path
       }
 
       // 累计大小检查
-      if (totalOutput.length + entry.length > 50000) {
+      if (totalOutput.length + entry.length > MAX_CHARS) {
         isStatFallback = true;
         break;
       }
@@ -172,7 +248,9 @@ export class GitService {
     }
 
     if (isStatFallback) {
-      console.log(`[AI Commit] Diff too large, switching to stat mode.`);
+      console.log(`[AI Commit] Diff too large (> ${MAX_CHARS}), switching to stat mode.`);
+      // Even with stat fallback, we might append the list of changed files if stat is too simple?
+      // For now, keep original behavior: use git diff --stat
       return this.getDiffStat(repo.rootUri.fsPath);
     }
 
@@ -180,7 +258,33 @@ export class GitService {
   }
 
   /**
-   * 旧接口兼容: 直接获取 Smart Diff 字符串
+   * 获取最近的 N 条提交记录作为参考
+   */
+  async getRecentCommits(limit: number = 5): Promise<string[]> {
+    const repo = this.repository;
+    if (!repo) return [];
+    try {
+      // %s = subject only, %B = raw body (subject + body)
+      // Let's use %B to capture full style (including body formatting)
+      const output = await this.execCommand(
+        `git log -n ${limit} --pretty=format:"%B%n------------------------"`,
+        repo.rootUri.fsPath
+      );
+      
+      const debugLogs = output
+        .split("------------------------")
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+        
+      return debugLogs;
+    } catch (e) {
+      console.warn("Failed to fetch recent commits", e);
+      return [];
+    }
+  }
+
+  /**
+   * 旧接口兼容
    */
   async getSmartDiff(): Promise<string | null> {
     const analysis = await this.analyzeChanges();
@@ -192,19 +296,18 @@ export class GitService {
    * 处理单个已变更文件
    */
   private async processSingleChange(
-    change: any,
     rootPath: string,
     relativePath: string,
     fileName: string,
-    gitStatus: string
+    gitStatus: string,
+    cachedDiffContent?: string // [New Parameter]
   ): Promise<SmartChange> {
     // 1. 状态监测 (DELETED)
-    // 根据 git status 字符判断 'D'
     if (gitStatus.startsWith("D")) {
       return {
         relativePath,
         status: "已删除",
-        content: `[已删除] ${relativePath}`,
+        content: `[DELETED] ${relativePath}`,
         additions: 0,
         deletions: 0,
         chars: 0,
@@ -232,33 +335,9 @@ export class GitService {
     // 3. 二进制/资源
     const ext = path.extname(fileName).toLowerCase();
     const binaryExts = [
-      ".png",
-      ".jpg",
-      ".jpeg",
-      ".gif",
-      ".svg",
-      ".ico",
-      ".woff",
-      ".woff2",
-      ".ttf",
-      ".eot",
-      ".mp4",
-      ".webm",
-      ".mp3",
-      ".wav",
-      ".zip",
-      ".tar",
-      ".gz",
-      ".7z",
-      ".pdf",
-      ".exe",
-      ".dll",
-      ".so",
-      ".dylib",
-      ".bin",
-      ".dat",
-      ".db",
-      ".sqlite",
+      ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot",
+      ".mp4", ".webm", ".mp3", ".wav", ".zip", ".tar", ".gz", ".7z", ".pdf", ".exe", ".dll", 
+      ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite",
     ];
     if (binaryExts.includes(ext)) {
       return {
@@ -291,7 +370,9 @@ export class GitService {
 
     // 5. 读取内容 diff
     try {
-      const diffContent = await this.execGitDiff(rootPath, relativePath);
+      // Use cached diff if available, otherwise fallback to individual command (should rarely happen if parser works)
+      const diffContent = cachedDiffContent || await this.execGitDiff(rootPath, relativePath);
+      
       const lines = diffContent.split("\n");
 
       // 计算统计信息
@@ -305,10 +386,9 @@ export class GitService {
         }
       }
       const chars = diffContent.length;
-      const tokens = Math.ceil(chars / 4); // 粗略估算
+      const tokens = Math.ceil(chars / 4);
 
       // A. 新增文件特殊处理 (Added)
-      // Use gitStatus 'A'
       if (gitStatus === "A") {
         if (lines.length > 50) {
           const head = lines.slice(0, 25).join("\n");
@@ -328,9 +408,9 @@ export class GitService {
       }
 
       // B. 普通修改文件截断
-      // 如果非常大，依然截断
-      if (lines.length > 250) {
-        const head = lines.slice(0, 200).join("\n");
+      // 如果非常大，依然截断 -> 防止单个文件撑爆
+      if (lines.length > 1000) { // Relaxed from 250 to 1000 for better context
+        const head = lines.slice(0, 800).join("\n");
         const tail = lines.slice(-50).join("\n");
         return {
           relativePath,
@@ -353,10 +433,10 @@ export class GitService {
         tokens,
       };
     } catch (e) {
-      console.error(`Failed to get diff for ${relativePath}`, e);
+      // silent fail
       return {
         relativePath,
-        status: "完整", // 标记为 Full 但内容是错误提示
+        status: "完整", 
         content: `File: ${relativePath} (Error reading diff)`,
         additions: 0,
         deletions: 0,
@@ -388,7 +468,7 @@ export class GitService {
     return new Promise((resolve, reject) => {
       cp.exec(
         command,
-        { cwd, maxBuffer: 1024 * 1024 * 10 },
+        { cwd, maxBuffer: 1024 * 1024 * 50 }, // Increased buffer to 50MB for potential bulk diffs
         (err, stdout, stderr) => {
           if (err) {
             reject(err);

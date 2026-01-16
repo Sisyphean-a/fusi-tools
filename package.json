@@ -280,6 +280,12 @@
         "icon": "$(check)"
       },
       {
+        "command": "fusi-tools.viewAiPrompt",
+        "title": "View AI Prompt (查看发送给 AI 的 Prompt)",
+        "icon": "$(eye)",
+        "category": "Fusi Tools"
+      },
+      {
         "command": "fusi-tools.toggleSmartTranslate",
         "title": "启用/禁用 智能翻译",
         "icon": "$(globe)",

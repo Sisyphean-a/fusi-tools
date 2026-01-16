@@ -3,6 +3,9 @@ import { Logger } from "../../logger";
 import { GitService } from "./git";
 import { AiService } from "./ai";
 import { AiCommitViewProvider, CommitItem } from "./treeProvider";
+import { FAST_PROMPT } from "./prompts";
+import * as path from "path";
+import * as fs from "fs";
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("fusi-tools");
@@ -19,11 +22,53 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 缓存 diff 结果，供 "预处理后生成" 使用
   let cachedDiff: string | null = null;
+  // 缓存上下文信息，供 "预览 Prompt" 使用
+  let lastContext: { diff: string; projectMeta: string; recentCommits: string[] } | null = null;
 
   // 1. 注册 TreeDataProvider
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("fusi-tools.aiCommitView", provider)
   );
+
+  // 1.1 注册文本内容提供者 (用于 Prompt 预览)
+  const promptProvider = new (class implements vscode.TextDocumentContentProvider {
+    provideTextDocumentContent(uri: vscode.Uri): string {
+      if (!lastContext) return "No Prompt generated yet.";
+      
+      const { diff, projectMeta, recentCommits } = lastContext;
+      let content = FAST_PROMPT;
+      content = content.replace("{{PROJECT_META}}", projectMeta || "(None)");
+      const commitsStr = recentCommits.length > 0 
+        ? recentCommits.map(c => `- ${c}`).join("\n")
+        : "(None)";
+      content = content.replace("{{RECENT_COMMITS}}", commitsStr);
+
+      return `=== SYSTEM PROMPT ===\n${content}\n\n=== USER CONTENT (DIFF) ===\n${diff}`;
+    }
+  })();
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider("fusi-ai-prompt", promptProvider)
+  );
+
+
+  // ---------------------------------------------------------
+  // 辅助函数：获取 Project Meta
+  // ---------------------------------------------------------
+  const getProjectMeta = async (): Promise<string> => {
+    try {
+      if (!vscode.workspace.workspaceFolders) return "";
+      const rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+      const pkgPath = path.join(rootPath, "package.json");
+      if (fs.existsSync(pkgPath)) {
+        const raw = await fs.promises.readFile(pkgPath, "utf-8");
+        const pkg = JSON.parse(raw);
+        return `Project: ${pkg.name || "Unnamed"} - ${pkg.description || "No description"}`;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return "";
+  };
 
   // ---------------------------------------------------------
   // 辅助函数：执行 AI 生成
@@ -37,15 +82,21 @@ export function activate(context: vscode.ExtensionContext) {
       },
       async () => {
         try {
-          // 清空旧的 生成 选项 (保留预处理结果如果存在)
-          // provider.clear() 会全清，所以我们需要一个只清 commitItems 的方法？
-          // updatePreProcess 会清空 commitItems，所以如果这次是基于 preProcess 的，只要 refresh 就行。
+          // A. 获取 Git 历史 (Few-shot)
+          const recentCommits = await gitService.getRecentCommits(5);
+          
+          // B. 获取项目元数据
+          const projectMeta = await getProjectMeta();
+
+          // 保存上下文供预览
+          lastContext = { diff, projectMeta, recentCommits };
 
           // 调用快速 AI 服务
           Logger.info(
-            `正在调用 AI 生成 (快速策略)... Diff 长度: ${diff.length}`
+            `正在调用 AI 生成 (DeepSeek V3)... Diff 长度: ${diff.length}`
           );
-          await aiService.generate(diff, (options) => {
+          
+          await aiService.generate(diff, projectMeta, recentCommits, (options) => {
             Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
             provider.refresh(options);
           });
@@ -84,6 +135,11 @@ export function activate(context: vscode.ExtensionContext) {
 
         // 3. 格式化并缓存
         cachedDiff = await gitService.formatSmartDiff(analysis);
+
+        // [New] 预加载上下文，以便用户可以在“生成前”查看 Prompt
+        const recentCommits = await gitService.getRecentCommits(5);
+        const projectMeta = await getProjectMeta();
+        lastContext = { diff: cachedDiff, projectMeta, recentCommits };
 
         // 4. 更新 UI 展示文件列表
         provider.updatePreProcess(analysis);
@@ -173,5 +229,20 @@ export function activate(context: vscode.ExtensionContext) {
         }
       }
     )
+  );
+
+  // ---------------------------------------------------------
+  // 命令 5: 预览 AI Prompt (Native Text Editor)
+  // ---------------------------------------------------------
+  context.subscriptions.push(
+    vscode.commands.registerCommand("fusi-tools.viewAiPrompt", async () => {
+      if (!lastContext) {
+        vscode.window.showInformationMessage("尚未生成任何 AI 请求。请先执行生成操作。");
+        return;
+      }
+      const uri = vscode.Uri.parse("fusi-ai-prompt://preview/prompt.md");
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
+    })
   );
 }
