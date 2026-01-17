@@ -83,6 +83,30 @@
         .btn-clear.confirm:hover {
             background-color: var(--vscode-button-destructiveHoverBackground);
         }
+        .btn-copy {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--vscode-button-foreground);
+            background-color: var(--vscode-button-secondaryBackground);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-copy:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        .btn-copy:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 1px;
+        }
+        .btn-copy.success {
+            background-color: var(--vscode-charts-green);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -95,6 +119,9 @@
     <div class="footer">
         <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
         <div class="actions">
+            <button id="btn-copy" class="btn-copy" aria-label="Copy to Clipboard" title="Copy content">
+                Copy
+            </button>
             <button id="btn-clear" class="btn-clear" aria-label="Clear Scratchpad" title="Clear all content">
                 Clear
             </button>
@@ -105,6 +132,7 @@
         const textarea = document.getElementById('scratchpad');
         const charCount = document.getElementById('char-count');
         const btnClear = document.getElementById('btn-clear');
+        const btnCopy = document.getElementById('btn-copy');
         let clearTimeoutId;
 
         // Debounce function
@@ -168,6 +196,32 @@
         });
 
         textarea.addEventListener('focus', resetClearButton);
+
+        btnCopy.addEventListener('click', async () => {
+            const content = textarea.value;
+            if (!content) return;
+
+            try {
+                await navigator.clipboard.writeText(content);
+                const originalText = btnCopy.textContent;
+                btnCopy.textContent = 'Copied!';
+                btnCopy.classList.add('success');
+                btnCopy.setAttribute('aria-label', 'Content copied successfully');
+
+                setTimeout(() => {
+                    btnCopy.textContent = originalText;
+                    btnCopy.classList.remove('success');
+                    btnCopy.setAttribute('aria-label', 'Copy to Clipboard');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                const originalText = btnCopy.textContent;
+                btnCopy.textContent = 'Error';
+                setTimeout(() => {
+                    btnCopy.textContent = originalText;
+                }, 2000);
+            }
+        });
 
         // 接收来自扩展的消息
         window.addEventListener('message', (event) => {
