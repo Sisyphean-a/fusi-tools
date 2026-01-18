@@ -56,32 +56,47 @@
             display: flex;
             gap: 8px;
         }
-        .btn-clear {
+        .btn {
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--vscode-button-foreground);
-            background-color: var(--vscode-button-secondaryBackground);
             padding: 2px 6px;
             border-radius: 2px;
             font-size: 11px;
             display: flex;
             align-items: center;
             gap: 4px;
+            font-family: var(--vscode-font-family);
         }
-        .btn-clear:hover {
-            background-color: var(--vscode-button-secondaryHoverBackground);
-        }
-        .btn-clear:focus {
+        .btn:focus {
             outline: 1px solid var(--vscode-focusBorder);
             outline-offset: 1px;
         }
-        .btn-clear.confirm {
+
+        /* Secondary Button (Standard) */
+        .btn-secondary {
+            color: var(--vscode-button-secondaryForeground);
+            background-color: var(--vscode-button-secondaryBackground);
+        }
+        .btn-secondary:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        /* Destructive State for Secondary Button */
+        .btn-secondary.confirm {
             background-color: var(--vscode-button-destructiveBackground);
             color: var(--vscode-button-destructiveForeground);
         }
-        .btn-clear.confirm:hover {
+        .btn-secondary.confirm:hover {
             background-color: var(--vscode-button-destructiveHoverBackground);
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            color: var(--vscode-button-foreground);
+            background-color: var(--vscode-button-background);
+        }
+        .btn-primary:hover {
+            background-color: var(--vscode-button-hoverBackground);
         }
     </style>
 </head>
@@ -95,7 +110,10 @@
     <div class="footer">
         <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
         <div class="actions">
-            <button id="btn-clear" class="btn-clear" aria-label="Clear Scratchpad" title="Clear all content">
+            <button id="btn-copy" class="btn btn-primary" aria-label="Copy to Clipboard" title="Copy content to clipboard">
+                Copy
+            </button>
+            <button id="btn-clear" class="btn btn-secondary" aria-label="Clear Scratchpad" title="Clear all content">
                 Clear
             </button>
         </div>
@@ -105,7 +123,9 @@
         const textarea = document.getElementById('scratchpad');
         const charCount = document.getElementById('char-count');
         const btnClear = document.getElementById('btn-clear');
+        const btnCopy = document.getElementById('btn-copy');
         let clearTimeoutId;
+        let copyTimeoutId;
 
         // Debounce function
         function debounce(func, delay) {
@@ -132,6 +152,15 @@
             btnClear.dataset.state = 'idle';
         }
 
+        function resetCopyButton() {
+            if (copyTimeoutId) {
+                clearTimeout(copyTimeoutId);
+                copyTimeoutId = null;
+            }
+            btnCopy.textContent = 'Copy';
+            btnCopy.setAttribute('aria-label', 'Copy to Clipboard');
+        }
+
         // 监听内容变化
         const onInput = debounce(() => {
             vscode.postMessage({
@@ -145,6 +174,26 @@
             onInput();
         });
 
+        // Copy Button Logic
+        btnCopy.addEventListener('click', () => {
+            const content = textarea.value;
+            if (!content) return;
+
+            vscode.postMessage({
+                type: 'copyToClipboard',
+                content: content
+            });
+
+            btnCopy.textContent = 'Copied!';
+            btnCopy.setAttribute('aria-label', 'Copied to Clipboard');
+
+            if (copyTimeoutId) clearTimeout(copyTimeoutId);
+            copyTimeoutId = setTimeout(resetCopyButton, 2000);
+
+            textarea.focus();
+        });
+
+        // Clear Button Logic
         btnClear.addEventListener('click', () => {
             if (textarea.value.length === 0) return;
 

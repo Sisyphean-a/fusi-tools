@@ -37,6 +37,10 @@ export class ScratchpadViewProvider implements vscode.WebviewViewProvider {
           this._content = message.content;
           // 不记录频繁的内容变更日志，以免刷屏
           break;
+        case "copyToClipboard": {
+          vscode.env.clipboard.writeText(message.content);
+          break;
+        }
       }
     }, undefined);
 
