@@ -151,6 +151,9 @@ async function handleSelectionChange(
 
   const selection = event.selections[0];
   if (selection.isEmpty) {
+    // 选区为空时（例如单纯移动光标），重置上一次的文本记录
+    // 这样下次如果再选中相同文本，就能重新触发翻译
+    lastSelectionText = "";
     return;
   }
 
