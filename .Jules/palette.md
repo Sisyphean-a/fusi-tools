@@ -5,3 +5,7 @@
 ## 2024-06-15 - Lightweight Confirmation in Webviews
 **Learning:** Standard modal dialogs are too heavy for micro-interactions within Webviews. A two-step button confirmation (Click -> Confirm? -> Click) provides safety without context switching.
 **Action:** Implement inline state-based confirmation for destructive actions in Webviews, using `setTimeout` to auto-reset.
+
+## 2024-05-27 - Clipboard Reliability in Webviews
+**Learning:** `navigator.clipboard.writeText` in VS Code Webviews is flaky because it requires the document to be focused, which isn't guaranteed if the user just clicked a button.
+**Action:** Always delegate clipboard operations to the extension host via `postMessage` and `vscode.env.clipboard.writeText` for robust behavior.
