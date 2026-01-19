@@ -113,6 +113,9 @@
             <button id="btn-copy" class="btn btn-primary" aria-label="Copy to Clipboard" title="Copy content to clipboard">
                 Copy
             </button>
+            <button id="btn-remove-empty" class="btn btn-secondary" aria-label="Remove Empty Lines" title="Remove all empty lines">
+                Remove Empty Lines
+            </button>
             <button id="btn-clear" class="btn btn-secondary" aria-label="Clear Scratchpad" title="Clear all content">
                 Clear
             </button>
@@ -124,8 +127,10 @@
         const charCount = document.getElementById('char-count');
         const btnClear = document.getElementById('btn-clear');
         const btnCopy = document.getElementById('btn-copy');
+        const btnRemoveEmpty = document.getElementById('btn-remove-empty');
         let clearTimeoutId;
         let copyTimeoutId;
+        let removeEmptyTimeoutId;
 
         // Debounce function
         function debounce(func, delay) {
@@ -159,6 +164,15 @@
             }
             btnCopy.textContent = 'Copy';
             btnCopy.setAttribute('aria-label', 'Copy to Clipboard');
+        }
+
+        function resetRemoveEmptyButton() {
+            if (removeEmptyTimeoutId) {
+                clearTimeout(removeEmptyTimeoutId);
+                removeEmptyTimeoutId = null;
+            }
+            btnRemoveEmpty.textContent = 'Remove Empty Lines';
+            btnRemoveEmpty.setAttribute('aria-label', 'Remove Empty Lines');
         }
 
         // 监听内容变化
@@ -214,6 +228,36 @@
                 textarea.focus();
                 resetClearButton();
             }
+        });
+
+        // Remove Empty Lines Button Logic
+        btnRemoveEmpty.addEventListener('click', () => {
+            const content = textarea.value;
+            if (!content) return;
+
+            // 移除所有空行（包括只包含空格和制表符的行）
+            const lines = content.split('\n');
+            const nonEmptyLines = lines.filter(line => line.trim().length > 0);
+            const newContent = nonEmptyLines.join('\n');
+
+            // 如果内容没有变化，不做任何操作
+            if (newContent === content) {
+                btnRemoveEmpty.textContent = 'No Empty Lines';
+                btnRemoveEmpty.setAttribute('aria-label', 'No Empty Lines Found');
+            } else {
+                textarea.value = newContent;
+                updateCharCount();
+                onInput();
+                
+                const removedCount = lines.length - nonEmptyLines.length;
+                btnRemoveEmpty.textContent = `Removed ${removedCount}`;
+                btnRemoveEmpty.setAttribute('aria-label', `Removed ${removedCount} empty lines`);
+            }
+
+            if (removeEmptyTimeoutId) clearTimeout(removeEmptyTimeoutId);
+            removeEmptyTimeoutId = setTimeout(resetRemoveEmptyButton, 2000);
+
+            textarea.focus();
         });
 
         textarea.addEventListener('focus', resetClearButton);
