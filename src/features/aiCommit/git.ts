@@ -257,31 +257,7 @@ export class GitService {
     return totalOutput.trim();
   }
 
-  /**
-   * 获取最近的 N 条提交记录作为参考
-   */
-  async getRecentCommits(limit: number = 5): Promise<string[]> {
-    const repo = this.repository;
-    if (!repo) return [];
-    try {
-      // %s = subject only, %B = raw body (subject + body)
-      // Let's use %B to capture full style (including body formatting)
-      const output = await this.execCommand(
-        `git log -n ${limit} --pretty=format:"%B%n------------------------"`,
-        repo.rootUri.fsPath
-      );
-      
-      const debugLogs = output
-        .split("------------------------")
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-        
-      return debugLogs;
-    } catch (e) {
-      console.warn("Failed to fetch recent commits", e);
-      return [];
-    }
-  }
+
 
   /**
    * 旧接口兼容

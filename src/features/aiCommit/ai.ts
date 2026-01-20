@@ -21,7 +21,6 @@ export class AiService {
   async generate(
     diff: string, 
     projectMeta: string,
-    recentCommits: string[],
     onUpdate: (options: CommitOption[]) => void
   ) {
     const apiKey = this.config.get<string>("apiKey");
@@ -38,12 +37,6 @@ export class AiService {
       
       // 注入 Project Meta
       systemPrompt = systemPrompt.replace("{{PROJECT_META}}", projectMeta || "(None)");
-
-      // 注入 Recent Commits
-      const commitsStr = recentCommits.length > 0 
-        ? recentCommits.map(c => `- ${c}`).join("\n")
-        : "(None)";
-      systemPrompt = systemPrompt.replace("{{RECENT_COMMITS}}", commitsStr);
 
       const options = await this.fetchFastOptions(
         baseUrl!,
@@ -64,7 +57,7 @@ export class AiService {
 
   private sortOptions(options: CommitOption[]) {
     // Define sort order
-    const order = ["Emoji", "StandardShort", "Conventional", "Historical", "Smart"];
+    const order = ["Emoji", "StandardShort", "Conventional", "Smart"];
     options.sort((a, b) => {
       let ia = order.indexOf(a.type);
       let ib = order.indexOf(b.type);

@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
   // 缓存 diff 结果，供 "预处理后生成" 使用
   let cachedDiff: string | null = null;
   // 缓存上下文信息，供 "预览 Prompt" 使用
-  let lastContext: { diff: string; projectMeta: string; recentCommits: string[] } | null = null;
+  let lastContext: { diff: string; projectMeta: string } | null = null;
 
   // 1. 注册 TreeDataProvider
   context.subscriptions.push(
@@ -35,13 +35,9 @@ export function activate(context: vscode.ExtensionContext) {
     provideTextDocumentContent(uri: vscode.Uri): string {
       if (!lastContext) return "No Prompt generated yet.";
       
-      const { diff, projectMeta, recentCommits } = lastContext;
+      const { diff, projectMeta } = lastContext;
       let content = FAST_PROMPT;
       content = content.replace("{{PROJECT_META}}", projectMeta || "(None)");
-      const commitsStr = recentCommits.length > 0 
-        ? recentCommits.map(c => `- ${c}`).join("\n")
-        : "(None)";
-      content = content.replace("{{RECENT_COMMITS}}", commitsStr);
 
       return `=== SYSTEM PROMPT ===\n${content}\n\n=== USER CONTENT (DIFF) ===\n${diff}`;
     }
@@ -82,21 +78,21 @@ export function activate(context: vscode.ExtensionContext) {
       },
       async () => {
         try {
-          // A. 获取 Git 历史 (Few-shot)
-          const recentCommits = await gitService.getRecentCommits(5);
+          // A. (Removed) 获取 Git 历史 (Few-shot)
+          // const recentCommits = await gitService.getRecentCommits(5);
           
           // B. 获取项目元数据
           const projectMeta = await getProjectMeta();
 
           // 保存上下文供预览
-          lastContext = { diff, projectMeta, recentCommits };
+          lastContext = { diff, projectMeta };
 
           // 调用快速 AI 服务
           Logger.info(
             `正在调用 AI 生成 (DeepSeek V3)... Diff 长度: ${diff.length}`
           );
           
-          await aiService.generate(diff, projectMeta, recentCommits, (options) => {
+          await aiService.generate(diff, projectMeta, (options) => {
             Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
             provider.refresh(options);
           });
@@ -137,9 +133,8 @@ export function activate(context: vscode.ExtensionContext) {
         cachedDiff = await gitService.formatSmartDiff(analysis);
 
         // [New] 预加载上下文，以便用户可以在“生成前”查看 Prompt
-        const recentCommits = await gitService.getRecentCommits(5);
         const projectMeta = await getProjectMeta();
-        lastContext = { diff: cachedDiff, projectMeta, recentCommits };
+        lastContext = { diff: cachedDiff, projectMeta };
 
         // 4. 更新 UI 展示文件列表
         provider.updatePreProcess(analysis);
