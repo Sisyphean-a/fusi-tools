@@ -113,7 +113,7 @@
         autofocus
     ></textarea>
     <div class="footer">
-        <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
+        <span id="char-count" class="char-count">0 chars, 0 lines</span>
         <div class="actions">
             <button id="btn-copy" class="btn btn-primary" aria-label="Copy to Clipboard" title="Copy content to clipboard">
                 Copy
@@ -148,7 +148,8 @@
 
         function updateCharCount() {
             const length = textarea.value.length;
-            charCount.textContent = `${length} char${length !== 1 ? 's' : ''}`;
+            const lines = length === 0 ? 0 : textarea.value.split('\n').length;
+            charCount.textContent = `${length} char${length !== 1 ? 's' : ''}, ${lines} line${lines !== 1 ? 's' : ''}`;
         }
 
         function updateButtonStates() {
@@ -228,8 +229,6 @@
 
             if (copyTimeoutId) clearTimeout(copyTimeoutId);
             copyTimeoutId = setTimeout(resetCopyButton, 2000);
-
-            textarea.focus();
         });
 
         // Clear Button Logic
@@ -283,8 +282,6 @@
 
             if (removeEmptyTimeoutId) clearTimeout(removeEmptyTimeoutId);
             removeEmptyTimeoutId = setTimeout(resetRemoveEmptyButton, 2000);
-
-            textarea.focus();
         });
 
         textarea.addEventListener('focus', resetClearButton);
