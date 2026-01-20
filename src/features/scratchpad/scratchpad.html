@@ -72,13 +72,17 @@
             outline: 1px solid var(--vscode-focusBorder);
             outline-offset: 1px;
         }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         /* Secondary Button (Standard) */
         .btn-secondary {
             color: var(--vscode-button-secondaryForeground);
             background-color: var(--vscode-button-secondaryBackground);
         }
-        .btn-secondary:hover {
+        .btn-secondary:not(:disabled):hover {
             background-color: var(--vscode-button-secondaryHoverBackground);
         }
         /* Destructive State for Secondary Button */
@@ -95,7 +99,7 @@
             color: var(--vscode-button-foreground);
             background-color: var(--vscode-button-background);
         }
-        .btn-primary:hover {
+        .btn-primary:not(:disabled):hover {
             background-color: var(--vscode-button-hoverBackground);
         }
     </style>
@@ -106,6 +110,7 @@
         aria-label="Scratchpad Input"
         placeholder="Scratchpad: Type your temporary notes here... (Content is cleared on reload)"
         spellcheck="false"
+        autofocus
     ></textarea>
     <div class="footer">
         <span id="char-count" class="char-count" aria-live="polite">0 chars</span>
@@ -144,6 +149,25 @@
         function updateCharCount() {
             const length = textarea.value.length;
             charCount.textContent = `${length} char${length !== 1 ? 's' : ''}`;
+        }
+
+        function updateButtonStates() {
+            const hasContent = textarea.value.length > 0;
+            btnCopy.disabled = !hasContent;
+            btnRemoveEmpty.disabled = !hasContent;
+            // Clear button should also be disabled if there's no content
+            // However, we need to respect the "confirm" state if it was active,
+            // but if content is empty, confirm state is irrelevant as we can't clear empty.
+            // If we just cleared it, it becomes disabled.
+            btnClear.disabled = !hasContent;
+
+            // If disabled, we should probably reset any pending states (like Confirm?)
+            // to avoid weird states when re-enabling.
+            if (!hasContent) {
+                if (btnClear.dataset.state === 'confirm') {
+                    resetClearButton();
+                }
+            }
         }
 
         function resetClearButton() {
@@ -185,6 +209,7 @@
 
         textarea.addEventListener('input', () => {
             updateCharCount();
+            updateButtonStates();
             onInput();
         });
 
@@ -224,6 +249,7 @@
                 // Second click: Perform action
                 textarea.value = '';
                 updateCharCount();
+                updateButtonStates();
                 onInput();
                 textarea.focus();
                 resetClearButton();
@@ -247,6 +273,7 @@
             } else {
                 textarea.value = newContent;
                 updateCharCount();
+                updateButtonStates();
                 onInput();
                 
                 const removedCount = lines.length - nonEmptyLines.length;
@@ -269,9 +296,13 @@
                 case 'restoreContent':
                     textarea.value = message.content;
                     updateCharCount();
+                    updateButtonStates();
                     break;
             }
         });
+
+        // Initialize button states
+        updateButtonStates();
     </script>
 </body>
 </html>
