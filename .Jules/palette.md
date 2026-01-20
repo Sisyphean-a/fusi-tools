@@ -9,3 +9,7 @@
 ## 2024-05-27 - Clipboard Reliability in Webviews
 **Learning:** `navigator.clipboard.writeText` in VS Code Webviews is flaky because it requires the document to be focused, which isn't guaranteed if the user just clicked a button.
 **Action:** Always delegate clipboard operations to the extension host via `postMessage` and `vscode.env.clipboard.writeText` for robust behavior.
+
+## 2025-10-26 - Scratchpad Focus Management
+**Learning:** In VS Code Webviews, automatically returning focus to the main input (e.g. textarea) after a button click (like "Copy" or "Remove Empty Lines") can be disorienting for screen reader users and keyboard navigators. It interrupts the natural tab order and prevents users from hearing status updates on the button they just clicked.
+**Action:** Avoid calling `.focus()` on the input element immediately after secondary actions unless the primary purpose of the action is to prepare for immediate typing. For status updates (like "Copied!"), keep focus on the trigger element.
