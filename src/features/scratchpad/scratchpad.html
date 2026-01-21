@@ -216,7 +216,11 @@
 
         // Copy Button Logic
         btnCopy.addEventListener('click', () => {
-            const content = textarea.value;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const hasSelection = start !== end;
+            const content = hasSelection ? textarea.value.substring(start, end) : textarea.value;
+
             if (!content) return;
 
             vscode.postMessage({
@@ -224,8 +228,11 @@
                 content: content
             });
 
-            btnCopy.textContent = 'Copied!';
-            btnCopy.setAttribute('aria-label', 'Copied to Clipboard');
+            const feedbackText = hasSelection ? 'Copied Selection!' : 'Copied!';
+            const ariaLabel = hasSelection ? 'Copied Selection to Clipboard' : 'Copied to Clipboard';
+
+            btnCopy.textContent = feedbackText;
+            btnCopy.setAttribute('aria-label', ariaLabel);
 
             if (copyTimeoutId) clearTimeout(copyTimeoutId);
             copyTimeoutId = setTimeout(resetCopyButton, 2000);
