@@ -219,13 +219,24 @@
             const content = textarea.value;
             if (!content) return;
 
+            let textToCopy = content;
+            let feedbackText = 'Copied!';
+            let ariaLabel = 'Copied to Clipboard';
+
+            // Smart Copy: Copy selection if exists
+            if (textarea.selectionStart !== textarea.selectionEnd) {
+                textToCopy = content.substring(textarea.selectionStart, textarea.selectionEnd);
+                feedbackText = 'Copied Selection!';
+                ariaLabel = 'Copied Selection to Clipboard';
+            }
+
             vscode.postMessage({
                 type: 'copyToClipboard',
-                content: content
+                content: textToCopy
             });
 
-            btnCopy.textContent = 'Copied!';
-            btnCopy.setAttribute('aria-label', 'Copied to Clipboard');
+            btnCopy.textContent = feedbackText;
+            btnCopy.setAttribute('aria-label', ariaLabel);
 
             if (copyTimeoutId) clearTimeout(copyTimeoutId);
             copyTimeoutId = setTimeout(resetCopyButton, 2000);

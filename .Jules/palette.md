@@ -13,3 +13,7 @@
 ## 2025-10-26 - Scratchpad Focus Management
 **Learning:** In VS Code Webviews, automatically returning focus to the main input (e.g. textarea) after a button click (like "Copy" or "Remove Empty Lines") can be disorienting for screen reader users and keyboard navigators. It interrupts the natural tab order and prevents users from hearing status updates on the button they just clicked.
 **Action:** Avoid calling `.focus()` on the input element immediately after secondary actions unless the primary purpose of the action is to prepare for immediate typing. For status updates (like "Copied!"), keep focus on the trigger element.
+
+## 2025-05-20 - Smart Copy Context Sensitivity
+**Learning:** Users often select specific text expecting only that text to be copied, even if the general "Copy" button usually copies the entire document. Ignoring the selection in favor of a "Copy All" default feels like a loss of agency and utility.
+**Action:** Implement "Smart Copy" logic in text-heavy interfaces: if text is selected, copy only the selection; otherwise, copy the full content. Provide clear feedback (e.g., "Copied Selection!") to confirm the action.
