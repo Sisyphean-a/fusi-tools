@@ -17,3 +17,7 @@
 ## 2025-01-21 - Smart Copy Actions in Webviews
 **Learning:** Users often expect "Copy" buttons to respect their active text selection, even if the button click moves focus away from the input. Fortunately, `textarea.selectionStart/End` properties persist even when the element loses focus.
 **Action:** When implementing "Copy" actions in Webviews, check for selection first. If present, copy only the selection and update the button feedback (e.g. "Copied Selection!") to confirm the specific action.
+
+## 2025-01-23 - Visual Selection Feedback in Webviews
+**Learning:** Native VS Code editors automatically show selection statistics (e.g. "5 chars selected") in the status bar. Webviews are isolated and do not share this context, causing a disconnect in user expectation when working with text.
+**Action:** For text-heavy Webviews, manually calculate and display selection stats (checking `selectionStart !== selectionEnd`) and trigger updates on `mouseup`/`keyup` events to restore this expected utility.
