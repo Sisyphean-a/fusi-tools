@@ -131,7 +131,7 @@ export class ResourceCommands {
         // Windows: 使用简化的 PowerShell 单行命令
         const escapedPath = filePath.replace(/'/g, "''");
         const psCommand = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@('${escapedPath}'))`;
-        
+
         await new Promise<void>((resolve, reject) => {
           cp.exec(
             `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
@@ -141,15 +141,17 @@ export class ResourceCommands {
               } else {
                 resolve();
               }
-            }
+            },
           );
         });
       } else if (platform === "darwin") {
         // macOS: 使用 osascript (AppleScript)
         // 路径转义：反斜杠和双引号
-        const escapedPath = filePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        const escapedPath = filePath
+          .replace(/\\/g, "\\\\")
+          .replace(/"/g, '\\"');
         const appleScript = `set the clipboard to (POSIX file "${escapedPath}") as «class furl»`;
-        
+
         await new Promise<void>((resolve, reject) => {
           cp.exec(`osascript -e '${appleScript}'`, (error) => {
             if (error) {
@@ -163,7 +165,7 @@ export class ResourceCommands {
         // Linux: 使用 shell 回退机制，一次调用尝试两个工具
         const escapedPath = filePath.replace(/'/g, "'\\''");
         const cmd = `(echo -n 'file://${escapedPath}' | xclip -selection clipboard -t text/uri-list 2>/dev/null) || (echo -n 'file://${escapedPath}' | wl-copy 2>/dev/null)`;
-        
+
         await new Promise<void>((resolve, reject) => {
           cp.exec(cmd, (error, stdout, stderr) => {
             // 只要其中一个成功就算成功（通过 || 实现）
@@ -185,8 +187,64 @@ export class ResourceCommands {
     } catch (error) {
       Logger.error("复制文件到剪贴板失败", error);
       vscode.window.showErrorMessage(
-        `复制文件失败: ${error instanceof Error ? error.message : String(error)}`
+        `复制文件失败: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  /**
+   * 使用自定义模板复制文件路径
+   * @param uri 选中的资源 URI
+   */
+  public static async customCopy(uri: vscode.Uri) {
+    if (!uri) {
+      return;
+    }
+
+    // 获取配置的模板列表
+    const config = vscode.workspace.getConfiguration("fusi-tools");
+    const templates = config.get<Array<{ name: string; template: string }>>(
+      "resourceManager.customCopyTemplates",
+      [],
+    );
+
+    if (templates.length === 0) {
+      vscode.window.showWarningMessage(
+        "未配置自定义复制模板。请在设置中添加模板。",
+      );
+      return;
+    }
+
+    // 显示模板选择菜单
+    const items = templates.map((tpl) => ({
+      label: tpl.name,
+      description: tpl.template,
+      template: tpl.template,
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: "选择复制模板",
+    });
+
+    if (!selected) {
+      return;
+    }
+
+    // 获取相对路径
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    let relativePath: string;
+
+    if (workspaceFolder) {
+      relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+      relativePath = relativePath.split(path.sep).join("/");
+    } else {
+      relativePath = path.basename(uri.fsPath);
+    }
+
+    // 替换占位符，添加 @ 前缀
+    const textToCopy = selected.template.replace(/{path}/g, `@${relativePath}`);
+    await vscode.env.clipboard.writeText(textToCopy);
+    Logger.info(`已复制自定义模板到剪贴板: ${textToCopy}`);
+    vscode.window.showInformationMessage(`已复制: ${textToCopy}`);
   }
 }

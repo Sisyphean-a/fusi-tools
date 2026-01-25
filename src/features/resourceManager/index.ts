@@ -21,26 +21,32 @@ export function activate(context: vscode.ExtensionContext) {
       "fusi-tools.copyName",
       (uri: vscode.Uri) => {
         ResourceCommands.copyName(uri);
-      }
+      },
     ),
     vscode.commands.registerCommand(
       "fusi-tools.copyRelativeName",
       (uri: vscode.Uri) => {
         ResourceCommands.copyRelativeName(uri);
-      }
+      },
     ),
     vscode.commands.registerCommand(
       "fusi-tools.generateTree",
       (uri: vscode.Uri) => {
         ResourceCommands.generateTree(uri);
-      }
+      },
     ),
     vscode.commands.registerCommand(
       "fusi-tools.copyFile",
       (uri: vscode.Uri) => {
         ResourceCommands.copyFile(uri);
-      }
-    )
+      },
+    ),
+    vscode.commands.registerCommand(
+      "fusi-tools.customCopy",
+      (uri: vscode.Uri) => {
+        ResourceCommands.customCopy(uri);
+      },
+    ),
   );
 
   Logger.info("Resource Manager activated.");

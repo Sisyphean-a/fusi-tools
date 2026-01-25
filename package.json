@@ -95,6 +95,34 @@
             "default": true,
             "order": 0,
             "markdownDescription": "启用或禁用 **Resource Manager** 功能 (需要重启)。\n\n包括 `Copy Name`, `Generate Tree` 等命令。"
+          },
+          "fusi-tools.resourceManager.customCopyTemplates": {
+            "type": "array",
+            "default": [
+              {
+                "name": "阅读文档",
+                "template": "请先阅读 {path}，了解项目的功能和结构"
+              }
+            ],
+            "order": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "模板显示名称"
+                },
+                "template": {
+                  "type": "string",
+                  "description": "模板文本，使用 {path} 作为文件路径占位符"
+                }
+              },
+              "required": [
+                "name",
+                "template"
+              ]
+            },
+            "markdownDescription": "自定义复制模板列表。使用 `{path}` 作为文件路径占位符（会自动添加 @ 前缀）。"
           }
         }
       },
@@ -359,6 +387,11 @@
         "category": "Fusi Tools"
       },
       {
+        "command": "fusi-tools.customCopy",
+        "title": "自定义复制...",
+        "category": "Fusi Tools"
+      },
+      {
         "command": "fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
         "title": "忽略文件 (Assume-Unchanged)",
         "icon": "$(add)",
@@ -516,6 +549,11 @@
           "when": "resourceScheme == file || resourceScheme == folder"
         },
         {
+          "command": "fusi-tools.customCopy",
+          "group": "fusi-tools@2",
+          "when": "resourceScheme == file || resourceScheme == folder"
+        },
+        {
           "command": "fusi-tools.copyFile",
           "group": "fusi-tools@3",
           "when": "resourceScheme == file && !explorerResourceIsFolder"
@@ -539,6 +577,11 @@
         },
         {
           "command": "fusi-tools.copyRelativeName",
+          "group": "fusi-tools@2",
+          "when": "resourceScheme == file"
+        },
+        {
+          "command": "fusi-tools.customCopy",
           "group": "fusi-tools@2",
           "when": "resourceScheme == file"
         },
