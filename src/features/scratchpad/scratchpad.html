@@ -149,7 +149,16 @@
         function updateCharCount() {
             const length = textarea.value.length;
             const lines = length === 0 ? 0 : textarea.value.split('\n').length;
-            charCount.textContent = `${length} char${length !== 1 ? 's' : ''}, ${lines} line${lines !== 1 ? 's' : ''}`;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectionLen = Math.abs(end - start);
+
+            let status = `${length} char${length !== 1 ? 's' : ''}, ${lines} line${lines !== 1 ? 's' : ''}`;
+            if (selectionLen > 0) {
+                status += ` (${selectionLen} selected)`;
+            }
+            charCount.textContent = status;
         }
 
         function updateButtonStates() {
@@ -212,6 +221,11 @@
             updateCharCount();
             updateButtonStates();
             onInput();
+        });
+
+        // Update selection stats
+        ['mouseup', 'keyup', 'focus'].forEach(event => {
+            textarea.addEventListener(event, updateCharCount);
         });
 
         // Copy Button Logic
