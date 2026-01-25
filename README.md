@@ -15,6 +15,8 @@
 - 内容仅保存在内存中，不会写入磁盘
 - 重新加载窗口或重启 VS Code 后内容会清空
 - 自动适配 VS Code 的明暗主题
+- **实时统计**：显示总字符数和行数
+- **选中统计**：选中文本时显示选中部分的字符数和行数
 
 ### 🤖 AI Commit Assistant (AI 提交助手)
 
@@ -58,26 +60,53 @@
 - **文件别名**：可以为收藏的文件设置别名，无需修改物理文件名。
 - **快速访问**：右键菜单一键添加/移除选中文件。
 
+### 🛡️ Git Ignore Manager (Git 忽略规则管理)
+
+便捷管理 Git 的 `assume-unchanged` 和 `skip-worktree` 标记，用于忽略本地文件的特定变动（如配置文件）而不提交到远程仓库。
+
+**特点：**
+
+- **双模式支持**：支持 `assume-unchanged` 和 `skip-worktree` 两种忽略模式。
+- **可视乎管理**：在源代码管理 (SCM) 视图中提供独立的 "忽略文件" 列表。
+- **快速操作**：支持右键菜单一键忽略/取消忽略文件。
+- **自动刷新**：视图聚焦时自动刷新列表状态。
+
+### 🌿 Git Worktree Helper (工作树助手)
+
+VS Code 内置的 Git Worktree 管理工具，方便在不同分支间并行开发。
+
+**特点：**
+
+- **列表视图**：在 SCM 视图中展示当前仓库的所有 Worktree。
+- **便捷操作**：支持从侧边栏直接打开 Worktree（新窗口或当前窗口）。
+- **常用命令**：提供 Pull、Push、打开终端等常用快捷命令。
+
 ## 设置项
 
-| 设置项                                        | 类型    | 默认值  | 描述                                |
-| --------------------------------------------- | ------- | ------- | ----------------------------------- |
-| **AI Commit**                                 |         |         |                                     |
-| `fusi-tools.aiCommit.enabled`                 | boolean | `true`  | 启用/禁用 AI 提交助手               |
-| `fusi-tools.aiCommit.apiKey`                  | string  | `""`    | AI 服务的 API Key                   |
-| `fusi-tools.aiCommit.baseUrl`                 | string  | `...`   | AI 服务 Base URL                    |
-| `fusi-tools.aiCommit.model`                   | string  | `...`   | AI 模型名称                         |
-| `fusi-tools.aiCommit.prompt`                  | string  | `""`    | 自定义系统提示词                    |
-| **Resource Manager**                          |         |         |                                     |
-| `fusi-tools.resourceManager.enabled`          | boolean | `true`  | 启用/禁用 Resource Manager (需重启) |
-| **Smart Translate**                           |         |         |                                     |
-| `fusi-tools.smartTranslate.enabled`           | boolean | `true`  | 启用/禁用 智能翻译                  |
-| `fusi-tools.smartTranslate.displayDuration`   | number  | `5000`  | 翻译显示时长(ms)                    |
-| `fusi-tools.smartTranslate.statusBarPosition` | string  | `right` | 状态栏位置 (left/right)             |
-| **Project Favorites**                         |         |         |                                     |
-| `fusi-tools.projectFavorites.enabled`         | boolean | `true`  | 启用/禁用 常用文件功能              |
-| **Scratchpad**                                |         |         |                                     |
-| `fusi-tools.scratchpad.enabled`               | boolean | `true`  | 启用/禁用 Scratchpad                |
+| 设置项                                          | 类型    | 默认值   | 描述                                |
+| ----------------------------------------------- | ------- | -------- | ----------------------------------- |
+| **AI Commit**                                   |         |          |                                     |
+| `fusi-tools.aiCommit.enabled`                   | boolean | `true`   | 启用/禁用 AI 提交助手               |
+| `fusi-tools.aiCommit.apiKey`                    | string  | `""`     | AI 服务的 API Key                   |
+| `fusi-tools.aiCommit.baseUrl`                   | string  | `...`    | AI 服务 Base URL                    |
+| `fusi-tools.aiCommit.model`                     | string  | `...`    | AI 模型名称                         |
+| `fusi-tools.aiCommit.prompt`                    | string  | `""`     | 自定义系统提示词                    |
+| **Resource Manager**                            |         |          |                                     |
+| `fusi-tools.resourceManager.enabled`            | boolean | `true`   | 启用/禁用 Resource Manager (需重启) |
+| **Smart Translate**                             |         |          |                                     |
+| `fusi-tools.smartTranslate.enabled`             | boolean | `true`   | 启用/禁用 智能翻译                  |
+| `fusi-tools.smartTranslate.displayDuration`     | number  | `5000`   | 翻译显示时长(ms)                    |
+| `fusi-tools.smartTranslate.statusBarPosition`   | string  | `right`  | 状态栏位置 (left/right)             |
+| **Project Favorites**                           |         |          |                                     |
+| `fusi-tools.projectFavorites.enabled`           | boolean | `true`   | 启用/禁用 常用文件功能              |
+| **Scratchpad**                                  |         |          |                                     |
+| `fusi-tools.scratchpad.enabled`                 | boolean | `true`   | 启用/禁用 Scratchpad                |
+| **Git Ignore Manager**                          |         |          |                                     |
+| `fusi-tools.gitIgnoreManager.enabled`           | boolean | `true`   | 启用/禁用 Git 忽略管理              |
+| `fusi-tools.gitIgnoreManager.defaultIgnoreType` | string  | `assume` | 默认忽略类型 (assume/skip)          |
+| `fusi-tools.gitIgnoreManager.showCommandHints`  | boolean | `true`   | 显示 Git 命令提示                   |
+| **Git Worktree**                                |         |          |                                     |
+| `fusi-tools.gitWorktree.enabled`                | boolean | `true`   | 启用/禁用 Git Worktree              |
 
 ## 使用方法
 
