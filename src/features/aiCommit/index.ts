@@ -27,14 +27,16 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 1. 注册 TreeDataProvider
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider("fusi-tools.aiCommitView", provider)
+    vscode.window.registerTreeDataProvider("fusi-tools.aiCommitView", provider),
   );
 
   // 1.1 注册文本内容提供者 (用于 Prompt 预览)
-  const promptProvider = new (class implements vscode.TextDocumentContentProvider {
+  const promptProvider = new (class
+    implements vscode.TextDocumentContentProvider
+  {
     provideTextDocumentContent(uri: vscode.Uri): string {
       if (!lastContext) return "No Prompt generated yet.";
-      
+
       const { diff, projectMeta } = lastContext;
       let content = FAST_PROMPT;
       content = content.replace("{{PROJECT_META}}", projectMeta || "(None)");
@@ -43,9 +45,11 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })();
   context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider("fusi-ai-prompt", promptProvider)
+    vscode.workspace.registerTextDocumentContentProvider(
+      "fusi-ai-prompt",
+      promptProvider,
+    ),
   );
-
 
   // ---------------------------------------------------------
   // 辅助函数：获取 Project Meta
@@ -69,7 +73,10 @@ export function activate(context: vscode.ExtensionContext) {
   // ---------------------------------------------------------
   // 辅助函数：执行 AI 生成
   // ---------------------------------------------------------
-  const runAiGeneration = async (diff: string) => {
+  const runAiGeneration = async (
+    diff: string,
+    changeSummary: string = "(None)",
+  ) => {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -78,10 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
       },
       async () => {
         try {
-          // A. (Removed) 获取 Git 历史 (Few-shot)
-          // const recentCommits = await gitService.getRecentCommits(5);
-          
-          // B. 获取项目元数据
+          // 获取项目元数据
           const projectMeta = await getProjectMeta();
 
           // 保存上下文供预览
@@ -89,13 +93,18 @@ export function activate(context: vscode.ExtensionContext) {
 
           // 调用快速 AI 服务
           Logger.info(
-            `正在调用 AI 生成 (DeepSeek V3)... Diff 长度: ${diff.length}`
+            `正在调用 AI 生成 (DeepSeek V3)... Diff 长度: ${diff.length}`,
           );
-          
-          await aiService.generate(diff, projectMeta, (options) => {
-            Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
-            provider.refresh(options);
-          });
+
+          await aiService.generate(
+            diff,
+            projectMeta,
+            (options) => {
+              Logger.info(`收到 AI 部分结果: ${options.length} 条建议`);
+              provider.refresh(options);
+            },
+            changeSummary,
+          );
           Logger.info("AI 生成流程完成");
 
           // 聚焦到视图
@@ -104,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
           Logger.error("AI 生成中断或失败", error);
           vscode.window.showErrorMessage(`生成失败: ${error.message}`);
         }
-      }
+      },
     );
   };
 
@@ -147,7 +156,7 @@ export function activate(context: vscode.ExtensionContext) {
         provider.clear();
         vscode.window.showErrorMessage(`预处理失败: ${error.message}`);
       }
-    })
+    }),
   );
 
   // ---------------------------------------------------------
@@ -162,7 +171,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       await runAiGeneration(cachedDiff);
-    })
+    }),
   );
 
   // ---------------------------------------------------------
@@ -194,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
         provider.clear();
         vscode.window.showErrorMessage(`生成失败: ${error.message}`);
       }
-    })
+    }),
   );
 
   // ---------------------------------------------------------
@@ -222,8 +231,8 @@ export function activate(context: vscode.ExtensionContext) {
           Logger.info("尝试应用提交信息到 Git 输入框");
           gitService.setCommitMessage(message);
         }
-      }
-    )
+      },
+    ),
   );
 
   // ---------------------------------------------------------
@@ -232,12 +241,17 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("fusi-tools.viewAiPrompt", async () => {
       if (!lastContext) {
-        vscode.window.showInformationMessage("尚未生成任何 AI 请求。请先执行生成操作。");
+        vscode.window.showInformationMessage(
+          "尚未生成任何 AI 请求。请先执行生成操作。",
+        );
         return;
       }
       const uri = vscode.Uri.parse("fusi-ai-prompt://preview/prompt.md");
       const doc = await vscode.workspace.openTextDocument(uri);
-      await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
-    })
+      await vscode.window.showTextDocument(doc, {
+        preview: true,
+        viewColumn: vscode.ViewColumn.Beside,
+      });
+    }),
   );
 }

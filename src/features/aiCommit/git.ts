@@ -31,8 +31,45 @@ export class GitService {
   }
 
   /**
-    * 1. 分析暂存区变更，返回结构化数据
-    */
+   * 获取最近的 N 条 commit message (用于 Few-shot 学习)
+   * @param count 获取的条数，默认 5
+   * @param maxLength 每条消息的最大长度，默认 100
+   */
+  async getRecentCommits(
+    count: number = 5,
+    maxLength: number = 100,
+  ): Promise<string> {
+    const repo = this.repository;
+    if (!repo) return "(No recent commits)";
+
+    try {
+      const output = await this.execCommand(
+        `git log --oneline -n ${count} --pretty=format:"%s"`,
+        repo.rootUri.fsPath,
+      );
+
+      const lines = output
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => !!l)
+        .map((l) =>
+          l.length > maxLength ? l.substring(0, maxLength) + "..." : l,
+        );
+
+      if (lines.length === 0) {
+        return "(No recent commits)";
+      }
+
+      return lines.map((msg, i) => `${i + 1}. ${msg}`).join("\n");
+    } catch (e) {
+      console.error("Failed to get recent commits", e);
+      return "(Failed to fetch commit history)";
+    }
+  }
+
+  /**
+   * 1. 分析暂存区变更，返回结构化数据
+   */
   async analyzeChanges(): Promise<SmartChange[] | null> {
     const repo = this.repository;
     if (!repo) return null;
@@ -44,16 +81,16 @@ export class GitService {
 
     // [Fix] 使用 git diff --name-status 获取准确的文件状态
     const statusMap = await this.getIndexStatuses(rootPath);
-    
+
     // [Optimization] 批量获取所有文件的 Diff，避免 N 次进程调用
     console.time("git-bulk-diff");
     const fullDiffMap = await this.getAllDiffs(rootPath);
     console.timeEnd("git-bulk-diff");
 
     const results: SmartChange[] = [];
-    
+
     // 简单阈值判断 (即便有了批量 Diff，如果文件数极多，处理大量 DOM/TreeItem 依然可能慢，保留此检查作为一个软限制，但可以放宽)
-    const MAX_FILES_FOR_DETAIL = 100; 
+    const MAX_FILES_FOR_DETAIL = 100;
     const isTooManyFiles = changes.length > MAX_FILES_FOR_DETAIL;
 
     for (const change of changes) {
@@ -86,7 +123,7 @@ export class GitService {
         relativePath,
         fileName,
         gitStatus,
-        cachedDiff
+        cachedDiff,
       );
       results.push(smartChange);
     }
@@ -102,7 +139,7 @@ export class GitService {
     try {
       const output = await this.execCommand(
         "git diff --cached --name-status --no-renames",
-        cwd
+        cwd,
       );
       const lines = output
         .split("\n")
@@ -112,14 +149,14 @@ export class GitService {
       for (const line of lines) {
         const parts = line.split("\t");
         if (parts.length >= 2) {
-          const statusChar = parts[0].charAt(0).toUpperCase(); 
+          const statusChar = parts[0].charAt(0).toUpperCase();
           // parts[1] is path OR old_path new_path
           if (statusChar === "R") {
             if (parts.length >= 3) {
               map.set(parts[2], "A"); // Treat rename target as Added
             }
           } else {
-             map.set(parts[parts.length - 1], statusChar);
+            map.set(parts[parts.length - 1], statusChar);
           }
         }
       }
@@ -140,8 +177,11 @@ export class GitService {
       // -U10000 is risky for huge files, default context (3 lines) is safer for summary?
       // Actually standard diff (defaults to 3 lines context) is usually fine for AI.
       // But if we want AI to see more code, maybe -U10? Let's stick to default for now to keep size small.
-      const output = await this.execCommand("git diff --cached --no-color", cwd);
-      
+      const output = await this.execCommand(
+        "git diff --cached --no-color",
+        cwd,
+      );
+
       return this.parseDiffOutput(output);
     } catch (e) {
       console.error("Failed to get bulk diff", e);
@@ -154,7 +194,7 @@ export class GitService {
    */
   private parseDiffOutput(fullOutput: string): Map<string, string> {
     const map = new Map<string, string>();
-    
+
     // Git diff format usually starts with:
     // diff --git a/path/to/file b/path/to/file
     const lines = fullOutput.split("\n");
@@ -184,21 +224,21 @@ export class GitService {
         const match = line.match(/^diff --git a\/(.*) b\/(.*)$/);
         if (match) {
           // use the 'b' path as it represents the new state
-          currentFile = match[2]; 
-          // Note: git output might quote filenames with spaces or non-ascii. 
+          currentFile = match[2];
+          // Note: git output might quote filenames with spaces or non-ascii.
           // E.g. "a/file with space.txt" or "\344\270\255\346\226\207.txt"
-          // This simple parser might fail on very complex paths (quoted octal), 
+          // This simple parser might fail on very complex paths (quoted octal),
           // but for 99% cases it works.
           // Handling unquote is complex in JS without substantial libs.
           // Let's assume standard paths for now.
         }
       }
-      
+
       if (currentFile) {
         currentBuffer.push(line);
       }
     }
-    
+
     flush(); // Flush last file
     return map;
   }
@@ -213,7 +253,7 @@ export class GitService {
 
     // 检查是否已经是 "文件过多" 的状态
     const isTruncatedStructure = changes.some(
-      (c) => c.status === "TRUNCATED" && c.content.includes("Too many files")
+      (c) => c.status === "TRUNCATED" && c.content.includes("Too many files"),
     );
     if (isTruncatedStructure) {
       return this.getDiffStat(repo.rootUri.fsPath);
@@ -221,7 +261,7 @@ export class GitService {
 
     let totalOutput = "";
     let isStatFallback = false;
-    
+
     // [Optimization] 提升 Token 限制至 200,000 字符 (适配 DeepSeek V3 128k context)
     const MAX_CHARS = 200000;
 
@@ -231,8 +271,8 @@ export class GitService {
         change.status === "FULL" ||
         change.status === "TRUNCATED" ||
         change.status === "新增(已截断)" ||
-        change.status === "完整" || 
-        change.status === "已截断" 
+        change.status === "完整" ||
+        change.status === "已截断"
       ) {
         entry = change.content;
       } else {
@@ -248,7 +288,9 @@ export class GitService {
     }
 
     if (isStatFallback) {
-      console.log(`[AI Commit] Diff too large (> ${MAX_CHARS}), switching to stat mode.`);
+      console.log(
+        `[AI Commit] Diff too large (> ${MAX_CHARS}), switching to stat mode.`,
+      );
       // Even with stat fallback, we might append the list of changed files if stat is too simple?
       // For now, keep original behavior: use git diff --stat
       return this.getDiffStat(repo.rootUri.fsPath);
@@ -256,8 +298,6 @@ export class GitService {
 
     return totalOutput.trim();
   }
-
-
 
   /**
    * 旧接口兼容
@@ -276,7 +316,7 @@ export class GitService {
     relativePath: string,
     fileName: string,
     gitStatus: string,
-    cachedDiffContent?: string // [New Parameter]
+    cachedDiffContent?: string, // [New Parameter]
   ): Promise<SmartChange> {
     // 1. 状态监测 (DELETED)
     if (gitStatus.startsWith("D")) {
@@ -311,9 +351,33 @@ export class GitService {
     // 3. 二进制/资源
     const ext = path.extname(fileName).toLowerCase();
     const binaryExts = [
-      ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot",
-      ".mp4", ".webm", ".mp3", ".wav", ".zip", ".tar", ".gz", ".7z", ".pdf", ".exe", ".dll", 
-      ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".svg",
+      ".ico",
+      ".woff",
+      ".woff2",
+      ".ttf",
+      ".eot",
+      ".mp4",
+      ".webm",
+      ".mp3",
+      ".wav",
+      ".zip",
+      ".tar",
+      ".gz",
+      ".7z",
+      ".pdf",
+      ".exe",
+      ".dll",
+      ".so",
+      ".dylib",
+      ".bin",
+      ".dat",
+      ".db",
+      ".sqlite",
     ];
     if (binaryExts.includes(ext)) {
       return {
@@ -347,8 +411,9 @@ export class GitService {
     // 5. 读取内容 diff
     try {
       // Use cached diff if available, otherwise fallback to individual command (should rarely happen if parser works)
-      const diffContent = cachedDiffContent || await this.execGitDiff(rootPath, relativePath);
-      
+      const diffContent =
+        cachedDiffContent || (await this.execGitDiff(rootPath, relativePath));
+
       const lines = diffContent.split("\n");
 
       // 计算统计信息
@@ -385,7 +450,8 @@ export class GitService {
 
       // B. 普通修改文件截断
       // 如果非常大，依然截断 -> 防止单个文件撑爆
-      if (lines.length > 1000) { // Relaxed from 250 to 1000 for better context
+      if (lines.length > 1000) {
+        // Relaxed from 250 to 1000 for better context
         const head = lines.slice(0, 800).join("\n");
         const tail = lines.slice(-50).join("\n");
         return {
@@ -412,7 +478,7 @@ export class GitService {
       // silent fail
       return {
         relativePath,
-        status: "完整", 
+        status: "完整",
         content: `File: ${relativePath} (Error reading diff)`,
         additions: 0,
         deletions: 0,
@@ -436,7 +502,7 @@ export class GitService {
     // Use -- no-color to avoid ANSI codes
     return this.execCommand(
       `git diff --cached --no-color -- "${relativePath}"`,
-      cwd
+      cwd,
     );
   }
 
@@ -451,7 +517,7 @@ export class GitService {
             return;
           }
           resolve(stdout);
-        }
+        },
       );
     });
   }
