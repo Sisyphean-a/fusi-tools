@@ -123,12 +123,18 @@ npm install
 # 编译
 npm run compile
 
-# 监听模式
+# 监听模式 (Develop)
 npm run watch
 
-# 打包
+# 打包 (Build)
 vsce package
 ```
+
+> **注意**: 本项目采用了模块化配置。`package.json` 是通过 `scripts/generate-manifest.js` 脚本自动生成的。
+> 
+> - 修改配置请编辑 `src/features/*/feature.json`。
+> - `npm run watch` 和 `vsce package` 会自动触发配置生成。
+> - 手动生成配置可运行: `npm run generate:manifest`。
 
 ## 许可证
 

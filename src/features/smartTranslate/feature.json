@@ -1,0 +1,45 @@
+{
+  "contributes": {
+    "configuration": [
+      {
+        "title": "FT: Smart Translate",
+        "properties": {
+          "fusi-tools.smartTranslate.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用/禁用 **智能翻译** 功能 (选中代码自动翻译/命名)。"
+          },
+          "fusi-tools.smartTranslate.displayDuration": {
+            "type": "number",
+            "default": 5000,
+            "order": 1,
+            "markdownDescription": "翻译结果显示时长 (毫秒)。"
+          },
+          "fusi-tools.smartTranslate.statusBarPosition": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right"
+            ],
+            "default": "right",
+            "order": 2,
+            "markdownDescription": "翻译状态栏位置。",
+            "enumDescriptions": [
+              "显示在状态栏左侧",
+              "显示在状态栏右侧"
+            ]
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "fusi-tools.toggleSmartTranslate",
+        "title": "启用/禁用 智能翻译",
+        "icon": "$(globe)",
+        "category": "Fusi Tools"
+      }
+    ]
+  }
+}

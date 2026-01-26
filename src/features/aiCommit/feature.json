@@ -1,0 +1,107 @@
+{
+  "contributes": {
+    "configuration": [
+      {
+        "title": "FT: AI Commit",
+        "properties": {
+          "fusi-tools.aiCommit.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **AI 提交助手** 功能。"
+          },
+          "fusi-tools.aiCommit.apiKey": {
+            "type": "string",
+            "default": "",
+            "order": 1,
+            "markdownDescription": "AI 服务的 API Key (例如 DeepSeek API Key)。[获取 Key](https://platform.deepseek.com/)",
+            "markdownAttributes": {
+              "placeholder": "sk-..."
+            }
+          },
+          "fusi-tools.aiCommit.baseUrl": {
+            "type": "string",
+            "default": "https://api.deepseek.com",
+            "order": 2,
+            "markdownDescription": "AI 服务的基础地址 (Base URL)。"
+          },
+          "fusi-tools.aiCommit.model": {
+            "type": "string",
+            "default": "deepseek-chat",
+            "order": 3,
+            "markdownDescription": "AI 模型名称 (例如 `deepseek-chat`)。"
+          },
+          "fusi-tools.aiCommit.prompt": {
+            "type": "string",
+            "default": "",
+            "order": 4,
+            "markdownDescription": "自定义系统提示词 (覆盖默认设置)。支持 Markdown 格式。"
+          }
+        }
+      }
+    ],
+    "views": {
+      "scm": [
+        {
+          "id": "fusi-tools.aiCommitView",
+          "name": "AI 提交助手",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "fusi-tools.previewSmartDiff",
+        "title": "查看预处理",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "fusi-tools.generateSmart",
+        "title": "预处理后生成",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fusi-tools.generateDirect",
+        "title": "直接生成",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "fusi-tools.applyCommit",
+        "title": "应用提交信息",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fusi-tools.viewAiPrompt",
+        "title": "View AI Prompt (查看发送给 AI 的 Prompt)",
+        "icon": "$(eye)",
+        "category": "Fusi Tools"
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "fusi-tools.applyCommit",
+          "when": "view == fusi-tools.aiCommitView && viewItem == commitItem",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "fusi-tools.previewSmartDiff",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fusi-tools.generateSmart",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fusi-tools.generateDirect",
+          "when": "view == fusi-tools.aiCommitView",
+          "group": "navigation@3"
+        }
+      ]
+    }
+  }
+}

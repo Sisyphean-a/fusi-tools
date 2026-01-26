@@ -1,0 +1,37 @@
+{
+  "contributes": {
+    "configuration": [
+      {
+        "title": "FT: Scratchpad",
+        "properties": {
+          "fusi-tools.scratchpad.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 0,
+            "markdownDescription": "启用或禁用 **随手记 (Scratchpad)** 功能。"
+          }
+        }
+      }
+    ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "scratchpad-container",
+          "title": "Scratchpad",
+          "icon": "$(edit)"
+        }
+      ]
+    },
+    "views": {
+      "scratchpad-container": [
+        {
+          "type": "webview",
+          "id": "scratchpad.view",
+          "name": "随手记",
+          "icon": "$(edit)",
+          "when": "config.fusi-tools.scratchpad.enabled"
+        }
+      ]
+    }
+  }
+}
