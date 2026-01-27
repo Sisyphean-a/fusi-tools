@@ -26,12 +26,6 @@
           }
         }
       }
-    ],
-    "commands": [
-      {
-        "command": "fusi-tools.helloWorld",
-        "title": "Demo: 你好世界"
-      }
     ]
   }
 }

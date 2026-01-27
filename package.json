@@ -254,11 +254,45 @@
         }
       }
     ],
+    "views": {
+      "scm": [
+        {
+          "id": "fusi-tools.aiCommitView",
+          "name": "AI 提交助手",
+          "icon": "$(sparkle)"
+        },
+        {
+          "id": "fusi-tools.gitIgnoreManager.view",
+          "name": "忽略文件（Git）",
+          "icon": "$(circle-slash)",
+          "when": "config.fusi-tools.gitIgnoreManager.enabled"
+        },
+        {
+          "id": "fusi-tools.gitWorktree.view",
+          "name": "工作树 (Worktrees)",
+          "icon": "$(git-branch)",
+          "when": "config.fusi-tools.gitWorktree.enabled",
+          "visibility": "collapsed"
+        }
+      ],
+      "projectFavorites-container": [
+        {
+          "id": "fusi-tools.projectFavorites.view",
+          "name": "常用文件",
+          "icon": "$(star-full)"
+        }
+      ],
+      "scratchpad-container": [
+        {
+          "type": "webview",
+          "id": "scratchpad.view",
+          "name": "随手记",
+          "icon": "$(edit)",
+          "when": "config.fusi-tools.scratchpad.enabled"
+        }
+      ]
+    },
     "commands": [
-      {
-        "command": "fusi-tools.helloWorld",
-        "title": "Demo: 你好世界"
-      },
       {
         "command": "fusi-tools.previewSmartDiff",
         "title": "查看预处理",
@@ -429,44 +463,6 @@
         "category": "Fusi Tools"
       }
     ],
-    "views": {
-      "scm": [
-        {
-          "id": "fusi-tools.aiCommitView",
-          "name": "AI 提交助手",
-          "icon": "$(sparkle)"
-        },
-        {
-          "id": "fusi-tools.gitIgnoreManager.view",
-          "name": "忽略文件（Git）",
-          "icon": "$(circle-slash)",
-          "when": "config.fusi-tools.gitIgnoreManager.enabled"
-        },
-        {
-          "id": "fusi-tools.gitWorktree.view",
-          "name": "工作树 (Worktrees)",
-          "icon": "$(git-branch)",
-          "when": "config.fusi-tools.gitWorktree.enabled",
-          "visibility": "collapsed"
-        }
-      ],
-      "projectFavorites-container": [
-        {
-          "id": "fusi-tools.projectFavorites.view",
-          "name": "常用文件",
-          "icon": "$(star-full)"
-        }
-      ],
-      "scratchpad-container": [
-        {
-          "type": "webview",
-          "id": "scratchpad.view",
-          "name": "随手记",
-          "icon": "$(edit)",
-          "when": "config.fusi-tools.scratchpad.enabled"
-        }
-      ]
-    },
     "menus": {
       "view/item/context": [
         {

@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fusi-tools/feature.schema.json",
+  "title": "Fusi Tools Feature Configuration",
+  "description": "Schema for feature.json files in Fusi Tools",
+  "type": "object",
+  "properties": {
+    "contributes": {
+      "type": "object",
+      "description": "VS Code contribution points",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "description": "Commands contributed by this feature",
+          "items": {
+            "type": "object",
+            "required": ["command", "title"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "pattern": "^fusi-tools\\.",
+                "description": "Command identifier (must start with 'fusi-tools.')"
+              },
+              "title": {
+                "type": "string",
+                "description": "Command title shown in UI"
+              },
+              "icon": {
+                "type": "string",
+                "description": "Icon for the command"
+              },
+              "category": {
+                "type": "string",
+                "description": "Command category"
+              }
+            }
+          }
+        },
+        "configuration": {
+          "type": "array",
+          "description": "Configuration settings",
+          "items": {
+            "type": "object",
+            "required": ["title", "properties"],
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Configuration section title"
+              },
+              "properties": {
+                "type": "object",
+                "description": "Configuration properties",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["string", "boolean", "number", "array", "object"]
+                    },
+                    "default": {
+                      "description": "Default value"
+                    },
+                    "order": {
+                      "type": "number",
+                      "description": "Display order in settings UI"
+                    },
+                    "markdownDescription": {
+                      "type": "string",
+                      "description": "Markdown description for settings UI"
+                    },
+                    "enum": {
+                      "type": "array",
+                      "description": "Allowed values for string type"
+                    },
+                    "enumDescriptions": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Descriptions for enum values"
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "Schema for array items"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "views": {
+          "type": "object",
+          "description": "Views contributed by this feature",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "View identifier"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "View name"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["tree", "webview"],
+                  "description": "View type"
+                },
+                "icon": {
+                  "type": "string",
+                  "description": "View icon"
+                },
+                "when": {
+                  "type": "string",
+                  "description": "When clause for view visibility"
+                },
+                "visibility": {
+                  "type": "string",
+                  "enum": ["visible", "collapsed", "hidden"],
+                  "description": "Initial visibility state"
+                }
+              }
+            }
+          }
+        },
+        "viewsContainers": {
+          "type": "object",
+          "description": "View containers",
+          "properties": {
+            "activitybar": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "title", "icon"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "icon": { "type": "string" }
+                }
+              }
+            },
+            "panel": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "title", "icon"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "icon": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "menus": {
+          "type": "object",
+          "description": "Menu contributions",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["command"],
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "description": "Command to execute"
+                },
+                "when": {
+                  "type": "string",
+                  "description": "When clause"
+                },
+                "group": {
+                  "type": "string",
+                  "description": "Menu group"
+                }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "activationEvents": {
+      "type": "array",
+      "description": "Additional activation events for this feature",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
