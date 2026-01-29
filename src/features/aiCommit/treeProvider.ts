@@ -52,12 +52,47 @@ export class PreProcessFileItem extends vscode.TreeItem {
 
 // 3. 预处理分组 (折叠容器)
 export class PreProcessGroupItem extends vscode.TreeItem {
-  constructor(public count: number) {
+  constructor(
+    public count: number,
+    public stats?: { additions: number; deletions: number; net: number }
+  ) {
     super("暂存文件预处理结果", vscode.TreeItemCollapsibleState.Expanded);
-    this.description = `(${count} 文件)`;
-    this.tooltip = "点击查看 AI 预处理后的文件状态列表";
+    this.updateDescription();
+    this.updateTooltip();
     this.iconPath = new vscode.ThemeIcon("file-submodule");
     this.contextValue = "preProcessGroup";
+  }
+
+  private updateDescription() {
+    if (this.stats) {
+      // 简洁格式: (3 文件) +123 -45 =+78
+      const netSign = this.stats.net >= 0 ? "+" : "";
+      this.description = `(${this.count} 文件) +${this.stats.additions} -${this.stats.deletions} =${netSign}${this.stats.net}`;
+    } else {
+      this.description = `(${this.count} 文件)`;
+    }
+  }
+
+  private updateTooltip() {
+    if (this.stats) {
+      const md = new vscode.MarkdownString();
+      md.appendMarkdown(`**文件数量：** ${this.count}\n\n`);
+      md.appendMarkdown(`**代码变更统计：**\n\n`);
+      md.appendMarkdown(`- 🟢 新增行数：\`+${this.stats.additions}\`\n`);
+      md.appendMarkdown(`- 🔴 删除行数：\`-${this.stats.deletions}\`\n`);
+      const netSign = this.stats.net >= 0 ? "+" : "";
+      md.appendMarkdown(`- 📊 净新增：\`${netSign}${this.stats.net}\`\n`);
+      md.isTrusted = true;
+      this.tooltip = md;
+    } else {
+      this.tooltip = "点击查看 AI 预处理后的文件状态列表";
+    }
+  }
+
+  updateStats(stats: { additions: number; deletions: number; net: number }) {
+    this.stats = stats;
+    this.updateDescription();
+    this.updateTooltip();
   }
 }
 
@@ -92,7 +127,7 @@ export class AiCommitViewProvider
 
   constructor() {
     this.commitGroup = new CommitGroupItem(0);
-    this.preProcessGroup = new PreProcessGroupItem(0);
+    this.preProcessGroup = new PreProcessGroupItem(0, undefined);
   }
 
   /**
@@ -109,7 +144,19 @@ export class AiCommitViewProvider
    */
   updatePreProcess(changes: SmartChange[]): void {
     this.changes = changes;
-    this.preProcessGroup.description = `(${changes.length} 文件)`;
+
+    // 计算总体统计
+    const stats = changes.reduce(
+      (acc, change) => ({
+        additions: acc.additions + (change.additions || 0),
+        deletions: acc.deletions + (change.deletions || 0),
+      }),
+      { additions: 0, deletions: 0 }
+    );
+    const net = stats.additions - stats.deletions;
+
+    this.preProcessGroup.updateStats({ ...stats, net });
+
     // 清空旧的生成结果，因为这是新的开始
     this.commitOptions = [];
     this.commitGroup.description = `(0 条建议)`;
@@ -126,6 +173,7 @@ export class AiCommitViewProvider
     this.commitOptions = [];
     this.changes = [];
     this.commitGroup.description = `(0)`;
+    this.preProcessGroup = new PreProcessGroupItem(0, undefined);
     this.preProcessGroup.description = `(分析中...)`;
 
     // 这里其实可以做一个特殊的 Loading Item 放在 group 里，但简单起见先清空
@@ -136,7 +184,7 @@ export class AiCommitViewProvider
     this.commitOptions = [];
     this.changes = [];
     this.commitGroup.description = `(0)`;
-    this.preProcessGroup.description = `(0)`;
+    this.preProcessGroup = new PreProcessGroupItem(0, undefined);
     this._onDidChangeTreeData.fire(undefined);
   }
 
