@@ -7,6 +7,7 @@ import { getAllModules } from "./modules";
  * 扩展激活时调用
  */
 export async function activate(context: vscode.ExtensionContext) {
+  const activationStarted = Date.now();
   // 从配置中加载日志级别
   Logger.loadLogLevelFromConfig();
 
@@ -25,9 +26,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // 注册所有功能模块
   featureLoader.registerAll(getAllModules());
 
-  // 激活所有模块（带错误处理）
-  await featureLoader.activateAll(context);
+  // 先注册懒触发入口，再激活启动模块
+  featureLoader.registerLazyEntrypoints(context);
+  await featureLoader.activateStartupModules(context);
 
+  Logger.info(`[perf][activate] 扩展激活总耗时 ${Date.now() - activationStarted}ms`);
   Logger.info("Fusi Tools activation completed.");
 }
 

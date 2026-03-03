@@ -21,6 +21,20 @@ export interface FeatureModule {
   readonly name: string;
 
   /**
+   * 激活策略
+   * - startup: 扩展激活时立即加载
+   * - command: 首次执行命令时加载
+   * - view: 首次打开视图时加载
+   */
+  readonly activationStrategy?: 'startup' | 'command' | 'view';
+
+  /** 命令触发器（首次执行命令时激活） */
+  readonly commandTriggers?: readonly string[];
+
+  /** 视图触发器（首次打开视图时激活） */
+  readonly viewTriggers?: readonly string[];
+
+  /**
    * 是否支持延迟加载
    * 如果为 true，模块将在首次使用时才真正初始化
    */

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { FeatureModule, FeatureActivationResult } from './types/feature';
 import { isFeatureEnabled } from './utils/config';
-import { Logger } from './logger';
 
 // 导入各功能模块
 import { ScratchpadViewProvider } from './features/scratchpad/ScratchpadViewProvider';
@@ -31,6 +30,7 @@ function failure(error: Error): FeatureActivationResult {
  */
 export const scratchpadModule: FeatureModule = {
   name: 'scratchpad',
+  activationStrategy: 'startup',
   lazyLoad: false,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -55,6 +55,15 @@ export const scratchpadModule: FeatureModule = {
  */
 export const aiCommitModule: FeatureModule = {
   name: 'aiCommit',
+  activationStrategy: 'command',
+  commandTriggers: [
+    'fusi-tools.previewSmartDiff',
+    'fusi-tools.generateSmart',
+    'fusi-tools.generateDirect',
+    'fusi-tools.applyCommit',
+    'fusi-tools.viewAiPrompt'
+  ],
+  viewTriggers: ['fusi-tools.aiCommitView'],
   lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -72,6 +81,7 @@ export const aiCommitModule: FeatureModule = {
  */
 export const smartTranslateModule: FeatureModule = {
   name: 'smartTranslate',
+  activationStrategy: 'startup',
   lazyLoad: false,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -93,6 +103,18 @@ export const smartTranslateModule: FeatureModule = {
  */
 export const projectFavoritesModule: FeatureModule = {
   name: 'projectFavorites',
+  activationStrategy: 'command',
+  commandTriggers: [
+    'fusi-tools.projectFavorites.addFile',
+    'fusi-tools.projectFavorites.moveToCategory',
+    'fusi-tools.projectFavorites.addCategory',
+    'fusi-tools.projectFavorites.removeFile',
+    'fusi-tools.projectFavorites.removeCategory',
+    'fusi-tools.projectFavorites.renameCategory',
+    'fusi-tools.projectFavorites.renameFile',
+    'fusi-tools.projectFavorites.refresh'
+  ],
+  viewTriggers: ['fusi-tools.projectFavorites.view'],
   lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -110,6 +132,14 @@ export const projectFavoritesModule: FeatureModule = {
  */
 export const resourceManagerModule: FeatureModule = {
   name: 'resourceManager',
+  activationStrategy: 'command',
+  commandTriggers: [
+    'fusi-tools.copyName',
+    'fusi-tools.copyRelativeName',
+    'fusi-tools.generateTree',
+    'fusi-tools.copyFile',
+    'fusi-tools.customCopy'
+  ],
   lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -127,6 +157,15 @@ export const resourceManagerModule: FeatureModule = {
  */
 export const gitIgnoreManagerModule: FeatureModule = {
   name: 'gitIgnoreManager',
+  activationStrategy: 'command',
+  commandTriggers: [
+    'fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged',
+    'fusi-tools.gitIgnoreManager.ignoreSkipWorktree',
+    'fusi-tools.gitIgnoreManager.showIgnored',
+    'fusi-tools.gitIgnoreManager.unignore',
+    'fusi-tools.gitIgnoreManager.refresh'
+  ],
+  viewTriggers: ['fusi-tools.gitIgnoreManager.view'],
   lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
@@ -144,6 +183,17 @@ export const gitIgnoreManagerModule: FeatureModule = {
  */
 export const gitWorktreeModule: FeatureModule = {
   name: 'gitWorktree',
+  activationStrategy: 'command',
+  commandTriggers: [
+    'fusi-tools.gitWorktree.refresh',
+    'fusi-tools.gitWorktree.openIntegratedTerminal',
+    'fusi-tools.gitWorktree.openExternalTerminal',
+    'fusi-tools.gitWorktree.pull',
+    'fusi-tools.gitWorktree.push',
+    'fusi-tools.gitWorktree.revealInExplorer',
+    'fusi-tools.gitWorktree.openInVsCode'
+  ],
+  viewTriggers: ['fusi-tools.gitWorktree.view'],
   lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {

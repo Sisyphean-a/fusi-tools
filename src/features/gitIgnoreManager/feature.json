@@ -1,4 +1,12 @@
 {
+  "activationEvents": [
+    "onView:fusi-tools.gitIgnoreManager.view",
+    "onCommand:fusi-tools.gitIgnoreManager.ignoreAssumeUnchanged",
+    "onCommand:fusi-tools.gitIgnoreManager.ignoreSkipWorktree",
+    "onCommand:fusi-tools.gitIgnoreManager.showIgnored",
+    "onCommand:fusi-tools.gitIgnoreManager.unignore",
+    "onCommand:fusi-tools.gitIgnoreManager.refresh"
+  ],
   "contributes": {
     "configuration": [
       {
