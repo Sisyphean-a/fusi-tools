@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { FeatureActivationResult, FeatureModule } from "./types/feature";
 import { Logger } from "./logger";
+import { LazyViewHost } from "./lazyViewHost";
 
 const PERF_PREFIX = "[perf]";
 
@@ -17,7 +18,8 @@ export class FeatureLoader {
   private activatedModules = new Set<string>();
   private activationResults = new Map<string, FeatureActivationResult>();
   private initializingModules = new Map<string, Promise<FeatureActivationResult>>();
-  private lazyEntrypoints = new Map<string, vscode.Disposable[]>();
+  private lazyCommandEntrypoints = new Map<string, vscode.Disposable[]>();
+  private lazyViewHost = new LazyViewHost();
 
   register(module: FeatureModule): void {
     if (this.modules.has(module.name)) {
@@ -151,7 +153,7 @@ export class FeatureLoader {
         disposable?.dispose();
         await vscode.commands.executeCommand(commandId, ...args);
       });
-      this.trackLazyEntrypoint(module.name, disposable);
+      this.trackLazyCommandEntrypoint(module.name, disposable);
       context.subscriptions.push(disposable);
     }
   }
@@ -162,20 +164,12 @@ export class FeatureLoader {
   ): void {
     const triggers = module.viewTriggers ?? [];
     for (const viewId of triggers) {
-      let disposable: vscode.Disposable | undefined;
-      disposable = vscode.window.registerTreeDataProvider(viewId, {
-        getTreeItem: (element: vscode.TreeItem) => element,
-        getChildren: async () => {
-          const result = await this.ensureModuleActivated(module.name, context);
-          if (!result.success) {
-            return [new vscode.TreeItem(`模块 ${module.name} 加载失败`)];
-          }
-          disposable?.dispose();
-          return [];
-        },
-      });
-      this.trackLazyEntrypoint(module.name, disposable);
-      context.subscriptions.push(disposable);
+      this.lazyViewHost.registerPlaceholder(
+        viewId,
+        module.name,
+        () => this.ensureModuleActivated(module.name, context),
+        context
+      );
     }
   }
 
@@ -215,8 +209,11 @@ export class FeatureLoader {
     try {
       const started = Date.now();
       Logger.debug(`正在激活模块: ${module.name}...`);
-      this.disposeLazyEntrypoints(module.name);
-      const result = await module.activate(context);
+      this.disposeLazyCommandEntrypoints(module.name);
+      const result = await this.lazyViewHost.withInterception(
+        module.viewTriggers,
+        () => module.activate(context)
+      );
       const elapsed = Date.now() - started;
       Logger.info(`${PERF_PREFIX}[module:${module.name}] 激活耗时 ${elapsed}ms`);
 
@@ -258,14 +255,14 @@ export class FeatureLoader {
       });
   }
 
-  private trackLazyEntrypoint(moduleName: string, disposable: vscode.Disposable): void {
-    const entrypoints = this.lazyEntrypoints.get(moduleName) ?? [];
+  private trackLazyCommandEntrypoint(moduleName: string, disposable: vscode.Disposable): void {
+    const entrypoints = this.lazyCommandEntrypoints.get(moduleName) ?? [];
     entrypoints.push(disposable);
-    this.lazyEntrypoints.set(moduleName, entrypoints);
+    this.lazyCommandEntrypoints.set(moduleName, entrypoints);
   }
 
-  private disposeLazyEntrypoints(moduleName: string): void {
-    const entrypoints = this.lazyEntrypoints.get(moduleName);
+  private disposeLazyCommandEntrypoints(moduleName: string): void {
+    const entrypoints = this.lazyCommandEntrypoints.get(moduleName);
     if (!entrypoints) {
       return;
     }
@@ -273,7 +270,7 @@ export class FeatureLoader {
     for (const entrypoint of entrypoints) {
       entrypoint.dispose();
     }
-    this.lazyEntrypoints.delete(moduleName);
+    this.lazyCommandEntrypoints.delete(moduleName);
   }
 }
 
