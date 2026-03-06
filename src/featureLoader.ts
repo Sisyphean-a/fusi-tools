@@ -17,6 +17,7 @@ export class FeatureLoader {
   private activatedModules = new Set<string>();
   private activationResults = new Map<string, FeatureActivationResult>();
   private initializingModules = new Map<string, Promise<FeatureActivationResult>>();
+  private lazyEntrypoints = new Map<string, vscode.Disposable[]>();
 
   register(module: FeatureModule): void {
     if (this.modules.has(module.name)) {
@@ -150,6 +151,7 @@ export class FeatureLoader {
         disposable?.dispose();
         await vscode.commands.executeCommand(commandId, ...args);
       });
+      this.trackLazyEntrypoint(module.name, disposable);
       context.subscriptions.push(disposable);
     }
   }
@@ -172,6 +174,7 @@ export class FeatureLoader {
           return [];
         },
       });
+      this.trackLazyEntrypoint(module.name, disposable);
       context.subscriptions.push(disposable);
     }
   }
@@ -212,6 +215,7 @@ export class FeatureLoader {
     try {
       const started = Date.now();
       Logger.debug(`正在激活模块: ${module.name}...`);
+      this.disposeLazyEntrypoints(module.name);
       const result = await module.activate(context);
       const elapsed = Date.now() - started;
       Logger.info(`${PERF_PREFIX}[module:${module.name}] 激活耗时 ${elapsed}ms`);
@@ -252,6 +256,24 @@ export class FeatureLoader {
           Logger.show();
         }
       });
+  }
+
+  private trackLazyEntrypoint(moduleName: string, disposable: vscode.Disposable): void {
+    const entrypoints = this.lazyEntrypoints.get(moduleName) ?? [];
+    entrypoints.push(disposable);
+    this.lazyEntrypoints.set(moduleName, entrypoints);
+  }
+
+  private disposeLazyEntrypoints(moduleName: string): void {
+    const entrypoints = this.lazyEntrypoints.get(moduleName);
+    if (!entrypoints) {
+      return;
+    }
+
+    for (const entrypoint of entrypoints) {
+      entrypoint.dispose();
+    }
+    this.lazyEntrypoints.delete(moduleName);
   }
 }
 
