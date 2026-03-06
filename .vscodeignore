@@ -13,3 +13,11 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+.claude/**
+.github/**
+.Jules/**
+docs/**
+CLAUDE.md
+package.base.json
+pnpm-lock.yaml
+tsconfig.tsbuildinfo
