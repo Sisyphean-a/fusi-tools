@@ -19,19 +19,11 @@ function success(disabled = false): FeatureActivationResult {
 }
 
 /**
- * 创建失败的激活结果
- */
-function failure(error: Error): FeatureActivationResult {
-  return { success: false, error };
-}
-
-/**
  * Scratchpad 模块
  */
 export const scratchpadModule: FeatureModule = {
   name: 'scratchpad',
   activationStrategy: 'startup',
-  lazyLoad: false,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('scratchpad')) {
@@ -64,7 +56,6 @@ export const aiCommitModule: FeatureModule = {
     'fusi-tools.viewAiPrompt'
   ],
   viewTriggers: ['fusi-tools.aiCommitView'],
-  lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('aiCommit')) {
@@ -82,7 +73,6 @@ export const aiCommitModule: FeatureModule = {
 export const smartTranslateModule: FeatureModule = {
   name: 'smartTranslate',
   activationStrategy: 'startup',
-  lazyLoad: false,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('smartTranslate')) {
@@ -115,7 +105,6 @@ export const projectFavoritesModule: FeatureModule = {
     'fusi-tools.projectFavorites.refresh'
   ],
   viewTriggers: ['fusi-tools.projectFavorites.view'],
-  lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('projectFavorites')) {
@@ -140,7 +129,6 @@ export const resourceManagerModule: FeatureModule = {
     'fusi-tools.copyFile',
     'fusi-tools.customCopy'
   ],
-  lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('resourceManager')) {
@@ -166,7 +154,6 @@ export const gitIgnoreManagerModule: FeatureModule = {
     'fusi-tools.gitIgnoreManager.refresh'
   ],
   viewTriggers: ['fusi-tools.gitIgnoreManager.view'],
-  lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('gitIgnoreManager')) {
@@ -194,7 +181,6 @@ export const gitWorktreeModule: FeatureModule = {
     'fusi-tools.gitWorktree.openInVsCode'
   ],
   viewTriggers: ['fusi-tools.gitWorktree.view'],
-  lazyLoad: true,
 
   activate(context: vscode.ExtensionContext): FeatureActivationResult {
     if (!isFeatureEnabled('gitWorktree')) {

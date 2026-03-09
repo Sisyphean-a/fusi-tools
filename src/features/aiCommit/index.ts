@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
   const promptProvider = new (class
     implements vscode.TextDocumentContentProvider
   {
-    provideTextDocumentContent(uri: vscode.Uri): string {
+    provideTextDocumentContent(): string {
       if (!lastContext) return "No Prompt generated yet.";
 
       const { diff, projectMeta } = lastContext;
@@ -124,7 +124,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("fusi-tools.previewSmartDiff", async () => {
       try {
         // 1. 显示加载中
-        provider.showLoading("正在分析暂存文件与预处理...");
+        provider.showLoading();
 
         // 简短延迟让 UI 刷新
         await new Promise((r) => setTimeout(r, 100));
@@ -181,7 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("fusi-tools.generateDirect", async () => {
       try {
         // 1. 显示加载
-        provider.showLoading("正在直接生成...");
+        provider.showLoading();
 
         // 2. 获取 diff (不做 UI 预览，直接获取字符串)
         const analysis = await gitService.analyzeChanges();

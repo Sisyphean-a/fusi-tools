@@ -169,7 +169,7 @@ export class AiCommitViewProvider
    * 实际上现在结构变了，Loading 怎么显示？
    * 可以把 Loading 显示在 suggestions 下面，或者清空 suggestions
    */
-  showLoading(message: string = "正在分析暂存文件..."): void {
+  showLoading(): void {
     this.commitOptions = [];
     this.changes = [];
     this.commitGroup.description = `(0)`;

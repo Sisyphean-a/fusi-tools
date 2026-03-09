@@ -35,12 +35,6 @@ export interface FeatureModule {
   readonly viewTriggers?: readonly string[];
 
   /**
-   * 是否支持延迟加载
-   * 如果为 true，模块将在首次使用时才真正初始化
-   */
-  readonly lazyLoad?: boolean;
-
-  /**
    * 激活功能模块
    * @param context VS Code 扩展上下文
    * @returns 激活结果
@@ -65,8 +59,3 @@ export type FeatureName =
   | 'projectFavorites'
   | 'gitIgnoreManager'
   | 'gitWorktree';
-
-/**
- * 功能模块配置键名
- */
-export type FeatureEnabledConfigKey = `${FeatureName}.enabled`;

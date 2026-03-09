@@ -511,7 +511,7 @@ export class GitService {
       cp.exec(
         command,
         { cwd, maxBuffer: 1024 * 1024 * 50 }, // Increased buffer to 50MB for potential bulk diffs
-        (err, stdout, stderr) => {
+        (err, stdout) => {
           if (err) {
             reject(err);
             return;

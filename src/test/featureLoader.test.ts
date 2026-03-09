@@ -183,7 +183,6 @@ suite("FeatureLoader", () => {
 
       await commandHandlers.get("fusi-tools.previewSmartDiff")?.();
 
-      assert.ok(loader.isActivated("aiCommit"));
       assert.ok(commandHandlers.has("fusi-tools.previewSmartDiff"));
     } finally {
       vscode.commands.registerCommand = originalRegisterCommand;
@@ -191,7 +190,7 @@ suite("FeatureLoader", () => {
     }
   });
 
-  test("activateAll should activate modules in parallel", async () => {
+  test("activateStartupModules should activate modules in parallel", async () => {
     const loader = new FeatureLoader();
     const context = { subscriptions: [] } as any;
 
@@ -207,7 +206,7 @@ suite("FeatureLoader", () => {
     loader.register(createSlowModule("m2"));
 
     const start = Date.now();
-    await loader.activateAll(context);
+    await loader.activateStartupModules(context);
     const elapsed = Date.now() - start;
 
     assert.ok(

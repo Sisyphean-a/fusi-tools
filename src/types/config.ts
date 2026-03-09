@@ -85,8 +85,3 @@ export interface FusiToolsConfig {
  * 配置键名类型
  */
 export type FusiToolsConfigKey = keyof FusiToolsConfig;
-
-/**
- * 功能启用配置键名
- */
-export type FeatureEnabledKey = Extract<FusiToolsConfigKey, `${string}.enabled`>;

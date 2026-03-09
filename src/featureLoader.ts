@@ -9,10 +9,6 @@ function failureResult(error: Error): FeatureActivationResult {
   return { success: false, error };
 }
 
-function successResult(disabled = false): FeatureActivationResult {
-  return { success: true, disabled };
-}
-
 export class FeatureLoader {
   private modules = new Map<string, FeatureModule>();
   private activatedModules = new Set<string>();
@@ -32,12 +28,6 @@ export class FeatureLoader {
     for (const module of modules) {
       this.register(module);
     }
-  }
-
-  async activateAll(
-    context: vscode.ExtensionContext
-  ): Promise<Map<string, FeatureActivationResult>> {
-    return this.activateStartupModules(context);
   }
 
   async activateStartupModules(
@@ -87,22 +77,6 @@ export class FeatureLoader {
 
     this.activatedModules.clear();
     Logger.info("所有功能模块已停用");
-  }
-
-  getActivationResult(name: string): FeatureActivationResult | undefined {
-    return this.activationResults.get(name);
-  }
-
-  isActivated(name: string): boolean {
-    return this.activatedModules.has(name);
-  }
-
-  getRegisteredModules(): string[] {
-    return Array.from(this.modules.keys());
-  }
-
-  getActivatedModules(): string[] {
-    return Array.from(this.activatedModules);
   }
 
   private async activateModulesParallel(
@@ -275,5 +249,3 @@ export class FeatureLoader {
 }
 
 export const featureLoader = new FeatureLoader();
-
-export { successResult as createSuccessResult, failureResult as createFailureResult };

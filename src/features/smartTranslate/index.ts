@@ -4,14 +4,12 @@ import { TranslatorService, TranslationResult } from "./translator";
 import { StatusBarManager } from "./ui/statusBar";
 import { NameGenerator } from "./nameGenerator";
 import { NamingPanel } from "./ui/namingPanel";
-import { SelectionDebugger } from "./utils/selectionDebugger";
 
 let translatorService: TranslatorService | undefined;
 let statusBarManager: StatusBarManager | undefined;
 let nameGenerator: NameGenerator | undefined;
 let namingPanel: NamingPanel | undefined;
 let lastTranslationResult: TranslationResult | null = null;
-let selectionDebugger: SelectionDebugger | undefined;
 
 // 防抖相关变量
 let selectionDebounceTimer: NodeJS.Timeout | undefined;
@@ -46,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
   // 检查配置是否启用
   const config = vscode.workspace.getConfiguration("fusi-tools.smartTranslate");
   if (config.get<boolean>("enabled", true)) {
-    startFeature(context);
+    startFeature();
   }
 
   // 监听配置变化
@@ -57,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
           .getConfiguration("fusi-tools.smartTranslate")
           .get<boolean>("enabled", true);
         if (newEnabled) {
-          startFeature(context);
+          startFeature();
         } else {
           stopFeature();
         }
@@ -86,7 +84,7 @@ async function toggleFeature() {
   }
 }
 
-function startFeature(context: vscode.ExtensionContext) {
+function startFeature() {
   if (isEnabled) {
     return;
   }
@@ -95,8 +93,7 @@ function startFeature(context: vscode.ExtensionContext) {
   translatorService = new TranslatorService();
   statusBarManager = new StatusBarManager();
   nameGenerator = new NameGenerator();
-  namingPanel = new NamingPanel(context);
-  selectionDebugger = SelectionDebugger.getInstance();
+  namingPanel = new NamingPanel();
 
   // 监听文本选择变化
   const selectionChangeListener = vscode.window.onDidChangeTextEditorSelection(

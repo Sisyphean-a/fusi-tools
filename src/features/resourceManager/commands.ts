@@ -167,7 +167,7 @@ export class ResourceCommands {
         const cmd = `(echo -n 'file://${escapedPath}' | xclip -selection clipboard -t text/uri-list 2>/dev/null) || (echo -n 'file://${escapedPath}' | wl-copy 2>/dev/null)`;
 
         await new Promise<void>((resolve, reject) => {
-          cp.exec(cmd, (error, stdout, stderr) => {
+          cp.exec(cmd, (error) => {
             // 只要其中一个成功就算成功（通过 || 实现）
             // 检查是否真的失败：两个命令都失败才报错
             if (error && error.code !== 0) {

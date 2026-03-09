@@ -2,11 +2,7 @@ import * as vscode from "vscode";
 import { NamingOption } from "../nameGenerator";
 
 export class NamingPanel {
-  private context: vscode.ExtensionContext;
-
-  constructor(context: vscode.ExtensionContext) {
-    this.context = context;
-  }
+  constructor() {}
 
   async show(namingOptions: NamingOption[]): Promise<void> {
     if (!namingOptions || namingOptions.length === 0) {
