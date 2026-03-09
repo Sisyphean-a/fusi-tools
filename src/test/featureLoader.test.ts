@@ -20,6 +20,37 @@ function createTreeViewStub(): vscode.TreeView<any> {
 }
 
 suite("FeatureLoader", () => {
+  test("AI 提交助手视图不应显示全部折叠按钮", async () => {
+    const loader = new FeatureLoader();
+    const context = createContext();
+    let aiCommitShowCollapseAll: boolean | undefined;
+    const originalCreateTreeView = vscode.window.createTreeView;
+
+    vscode.window.createTreeView = ((viewId: string, options: vscode.TreeViewOptions<vscode.TreeItem>) => {
+      if (viewId === "fusi-tools.aiCommitView") {
+        aiCommitShowCollapseAll = options.showCollapseAll;
+      }
+      return createTreeViewStub();
+    }) as typeof vscode.window.createTreeView;
+
+    try {
+      loader.register({
+        name: "aiCommit",
+        activationStrategy: "command",
+        viewTriggers: ["fusi-tools.aiCommitView"],
+        activate() {
+          return { success: true };
+        },
+      });
+
+      loader.registerLazyEntrypoints(context);
+
+      assert.strictEqual(aiCommitShowCollapseAll, false);
+    } finally {
+      vscode.window.createTreeView = originalCreateTreeView;
+    }
+  });
+
   test("view trigger should surface real tree items through the bound provider", async () => {
     const loader = new FeatureLoader();
     const context = createContext();

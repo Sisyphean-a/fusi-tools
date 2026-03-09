@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { FeatureActivationResult } from "./types/feature";
 
 type ViewProvider = vscode.TreeDataProvider<any>;
+const AI_COMMIT_VIEW_ID = "fusi-tools.aiCommitView";
 type ViewEntry = {
   proxy: LazyTreeDataProviderProxy;
   treeView: vscode.TreeView<any>;
@@ -79,7 +80,7 @@ export class LazyViewHost {
     const proxy = new LazyTreeDataProviderProxy(moduleName, viewId, activate);
     const treeView = vscode.window.createTreeView(viewId, {
       treeDataProvider: proxy,
-      showCollapseAll: true,
+      showCollapseAll: viewId !== AI_COMMIT_VIEW_ID,
     });
 
     this.entries.set(viewId, { proxy, treeView });
