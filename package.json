@@ -37,6 +37,8 @@
     "onCommand:fusi-tools.gitWorktree.push",
     "onCommand:fusi-tools.gitWorktree.revealInExplorer",
     "onCommand:fusi-tools.gitWorktree.openInVsCode",
+    "onCommand:fusi-tools.gitWorktree.createWorktree",
+    "onCommand:fusi-tools.gitWorktree.deleteWorktree",
     "onView:fusi-tools.projectFavorites.view",
     "onCommand:fusi-tools.projectFavorites.addFile",
     "onCommand:fusi-tools.projectFavorites.moveToCategory",
@@ -419,6 +421,18 @@
         "category": "Fusi Tools"
       },
       {
+        "command": "fusi-tools.gitWorktree.createWorktree",
+        "title": "新建 Worktree",
+        "icon": "$(add)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.deleteWorktree",
+        "title": "删除 Worktree",
+        "icon": "$(trash)",
+        "category": "Fusi Tools"
+      },
+      {
         "command": "fusi-tools.projectFavorites.addFile",
         "title": "添加到常用",
         "category": "Fusi Tools"
@@ -510,6 +524,16 @@
           "group": "inline"
         },
         {
+          "command": "fusi-tools.gitWorktree.createWorktree",
+          "when": "view == fusi-tools.gitWorktree.view && viewItem == repository",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.gitWorktree.deleteWorktree",
+          "when": "view == fusi-tools.gitWorktree.view && viewItem == worktree",
+          "group": "inline"
+        },
+        {
           "command": "fusi-tools.projectFavorites.renameCategory",
           "when": "view == fusi-tools.projectFavorites.view && viewItem == favoriteCategory",
           "group": "inline"
@@ -562,9 +586,14 @@
           "group": "navigation@2"
         },
         {
+          "command": "fusi-tools.gitWorktree.createWorktree",
+          "when": "view == fusi-tools.gitWorktree.view",
+          "group": "navigation@1"
+        },
+        {
           "command": "fusi-tools.gitWorktree.refresh",
           "when": "view == fusi-tools.gitWorktree.view",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "fusi-tools.projectFavorites.addCategory",

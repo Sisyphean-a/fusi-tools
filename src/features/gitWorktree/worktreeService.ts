@@ -12,6 +12,37 @@ export interface WorktreeInfo {
     commit: string;
 }
 
+export interface CreateWorktreeOptions {
+    worktreePath: string;
+    branchName: string;
+    createBranch: boolean;
+}
+
+export interface RemoveWorktreeOptions {
+    worktreePath: string;
+    force: boolean;
+}
+
+function quoteArg(value: string): string {
+    return `"${value.replace(/"/g, '\\"')}"`;
+}
+
+export function buildAddWorktreeCommand(options: CreateWorktreeOptions): string {
+    const pathArg = quoteArg(options.worktreePath);
+    const branchArg = quoteArg(options.branchName);
+
+    if (options.createBranch) {
+        return `git worktree add -b ${branchArg} ${pathArg}`;
+    }
+
+    return `git worktree add ${pathArg} ${branchArg}`;
+}
+
+export function buildRemoveWorktreeCommand(options: RemoveWorktreeOptions): string {
+    const forceFlag = options.force ? ' --force' : '';
+    return `git worktree remove${forceFlag} ${quoteArg(options.worktreePath)}`;
+}
+
 /**
  * 获取当前仓库的所有 worktrees
  */
@@ -93,6 +124,40 @@ export async function pushWorktree(worktreePath: string): Promise<string> {
         return stdout || stderr;
     } catch (error: any) {
         throw new Error(`Push failed: ${error.message}`);
+    }
+}
+
+export async function createWorktree(
+    repoRoot: string,
+    options: CreateWorktreeOptions
+): Promise<string> {
+    const command = buildAddWorktreeCommand(options);
+
+    try {
+        const { stdout, stderr } = await execAsync(command, {
+            cwd: repoRoot,
+            encoding: 'utf8'
+        });
+        return stdout || stderr;
+    } catch (error: any) {
+        throw new Error(`Create worktree failed: ${error.message}`);
+    }
+}
+
+export async function removeWorktree(
+    repoRoot: string,
+    options: RemoveWorktreeOptions
+): Promise<string> {
+    const command = buildRemoveWorktreeCommand(options);
+
+    try {
+        const { stdout, stderr } = await execAsync(command, {
+            cwd: repoRoot,
+            encoding: 'utf8'
+        });
+        return stdout || stderr;
+    } catch (error: any) {
+        throw new Error(`Remove worktree failed: ${error.message}`);
     }
 }
 

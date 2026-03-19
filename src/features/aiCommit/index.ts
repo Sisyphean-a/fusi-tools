@@ -4,6 +4,10 @@ import { GitService } from "./git";
 import { AiService } from "./ai";
 import { AiCommitViewProvider, CommitItem } from "./treeProvider";
 import { FAST_PROMPT } from "./prompts";
+import {
+  GitRepository,
+  resolveRepository,
+} from "../git/shared/repositoryResolver";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -24,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
   let cachedDiff: string | null = null;
   // 缓存上下文信息，供 "预览 Prompt" 使用
   let lastContext: { diff: string; projectMeta: string } | null = null;
+  let lastRepository: GitRepository | null = null;
 
   // 1. 注册 TreeDataProvider
   context.subscriptions.push(
@@ -54,11 +59,9 @@ export function activate(context: vscode.ExtensionContext) {
   // ---------------------------------------------------------
   // 辅助函数：获取 Project Meta
   // ---------------------------------------------------------
-  const getProjectMeta = async (): Promise<string> => {
+  const getProjectMeta = async (repoRoot: string): Promise<string> => {
     try {
-      if (!vscode.workspace.workspaceFolders) return "";
-      const rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-      const pkgPath = path.join(rootPath, "package.json");
+      const pkgPath = path.join(repoRoot, "package.json");
       if (fs.existsSync(pkgPath)) {
         const raw = await fs.promises.readFile(pkgPath, "utf-8");
         const pkg = JSON.parse(raw);
@@ -70,10 +73,22 @@ export function activate(context: vscode.ExtensionContext) {
     return "";
   };
 
+  const resolveTargetRepository = async (): Promise<GitRepository> => {
+    const resolved = await resolveRepository({
+      quickPickTitle: "AI Commit: 请选择目标 Git 仓库",
+    });
+    lastRepository = resolved.repository;
+    Logger.info(
+      `[RepoResolver] source=${resolved.source}, repo=${resolved.repository.rootUri.fsPath}`,
+    );
+    return resolved.repository;
+  };
+
   // ---------------------------------------------------------
   // 辅助函数：执行 AI 生成
   // ---------------------------------------------------------
   const runAiGeneration = async (
+    repository: GitRepository,
     diff: string,
     changeSummary: string = "(None)",
   ) => {
@@ -86,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
       async () => {
         try {
           // 获取项目元数据
-          const projectMeta = await getProjectMeta();
+          const projectMeta = await getProjectMeta(repository.rootUri.fsPath);
 
           // 保存上下文供预览
           lastContext = { diff, projectMeta };
@@ -123,6 +138,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("fusi-tools.previewSmartDiff", async () => {
       try {
+        const repository = await resolveTargetRepository();
+
         // 1. 显示加载中
         provider.showLoading();
 
@@ -131,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // 2. 分析
         Logger.info("正在分析文件变更 (智能预处理)...");
-        const analysis = await gitService.analyzeChanges();
+        const analysis = await gitService.analyzeChanges(repository);
         if (!analysis || analysis.length === 0) {
           provider.clear(); // 清除加载态
           vscode.window.showWarningMessage("未发现暂存更改，请先暂存文件。");
@@ -139,10 +156,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // 3. 格式化并缓存
-        cachedDiff = await gitService.formatSmartDiff(analysis);
+        cachedDiff = await gitService.formatSmartDiff(repository, analysis);
 
         // [New] 预加载上下文，以便用户可以在“生成前”查看 Prompt
-        const projectMeta = await getProjectMeta();
+        const projectMeta = await getProjectMeta(repository.rootUri.fsPath);
         lastContext = { diff: cachedDiff, projectMeta };
 
         // 4. 更新 UI 展示文件列表
@@ -170,7 +187,8 @@ export function activate(context: vscode.ExtensionContext) {
         if (!cachedDiff) return; // 如果还是没有 (e.g. 无更改)，终止
       }
 
-      await runAiGeneration(cachedDiff);
+      const repository = lastRepository || (await resolveTargetRepository());
+      await runAiGeneration(repository, cachedDiff);
     }),
   );
 
@@ -180,25 +198,27 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("fusi-tools.generateDirect", async () => {
       try {
+        const repository = await resolveTargetRepository();
+
         // 1. 显示加载
         provider.showLoading();
 
         // 2. 获取 diff (不做 UI 预览，直接获取字符串)
-        const analysis = await gitService.analyzeChanges();
+        const analysis = await gitService.analyzeChanges(repository);
         if (!analysis || analysis.length === 0) {
           provider.clear();
           vscode.window.showWarningMessage("未发现暂存更改，请先暂存文件。");
           return;
         }
 
-        const diff = await gitService.formatSmartDiff(analysis);
+        const diff = await gitService.formatSmartDiff(repository, analysis);
         cachedDiff = diff; // 顺便缓存
 
         // 更新 UI (后台更新，不聚焦，作为副产品)
         provider.updatePreProcess(analysis);
 
         // 3. 直接执行生成
-        await runAiGeneration(diff);
+        await runAiGeneration(repository, diff);
       } catch (error: any) {
         provider.clear();
         vscode.window.showErrorMessage(`生成失败: ${error.message}`);
@@ -212,7 +232,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "fusi-tools.applyCommit",
-      (arg: string | CommitItem) => {
+      async (arg: string | CommitItem) => {
         let message = "";
 
         if (typeof arg === "string") {
@@ -228,8 +248,15 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (message) {
-          Logger.info("尝试应用提交信息到 Git 输入框");
-          gitService.setCommitMessage(message);
+          try {
+            const repository = lastRepository || (await resolveTargetRepository());
+            Logger.info(
+              `尝试应用提交信息到 Git 输入框: ${repository.rootUri.fsPath}`,
+            );
+            gitService.setCommitMessage(message, repository);
+          } catch (error: any) {
+            vscode.window.showErrorMessage(`应用提交信息失败: ${error.message}`);
+          }
         }
       },
     ),

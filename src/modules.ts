@@ -178,7 +178,9 @@ export const gitWorktreeModule: FeatureModule = {
     'fusi-tools.gitWorktree.pull',
     'fusi-tools.gitWorktree.push',
     'fusi-tools.gitWorktree.revealInExplorer',
-    'fusi-tools.gitWorktree.openInVsCode'
+    'fusi-tools.gitWorktree.openInVsCode',
+    'fusi-tools.gitWorktree.createWorktree',
+    'fusi-tools.gitWorktree.deleteWorktree'
   ],
   viewTriggers: ['fusi-tools.gitWorktree.view'],
 

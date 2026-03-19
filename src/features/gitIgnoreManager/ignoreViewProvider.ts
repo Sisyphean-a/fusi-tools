@@ -96,11 +96,12 @@ export class IgnoreViewProvider implements vscode.TreeDataProvider<TreeItemData>
         const file = item.file;
         const fileName = path.basename(file.relPath);
         const dirPath = path.dirname(file.relPath);
+        const repoName = path.basename(file.repoRoot);
         
         const treeItem = new vscode.TreeItem(fileName, vscode.TreeItemCollapsibleState.None);
         
         // 显示相对路径作为描述
-        treeItem.description = dirPath === '.' ? '' : dirPath;
+        treeItem.description = dirPath === '.' ? `[${repoName}]` : `[${repoName}] ${dirPath}`;
         
         // 使用圆点图标
         treeItem.iconPath = new vscode.ThemeIcon(

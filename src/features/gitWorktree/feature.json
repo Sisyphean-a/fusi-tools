@@ -7,7 +7,9 @@
     "onCommand:fusi-tools.gitWorktree.pull",
     "onCommand:fusi-tools.gitWorktree.push",
     "onCommand:fusi-tools.gitWorktree.revealInExplorer",
-    "onCommand:fusi-tools.gitWorktree.openInVsCode"
+    "onCommand:fusi-tools.gitWorktree.openInVsCode",
+    "onCommand:fusi-tools.gitWorktree.createWorktree",
+    "onCommand:fusi-tools.gitWorktree.deleteWorktree"
   ],
   "contributes": {
     "configuration": [
@@ -70,14 +72,43 @@
         "command": "fusi-tools.gitWorktree.openInVsCode",
         "title": "在当前编辑器中打开",
         "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.createWorktree",
+        "title": "新建 Worktree",
+        "icon": "$(add)",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.gitWorktree.deleteWorktree",
+        "title": "删除 Worktree",
+        "icon": "$(trash)",
+        "category": "Fusi Tools"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "command": "fusi-tools.gitWorktree.createWorktree",
+          "when": "view == fusi-tools.gitWorktree.view",
+          "group": "navigation@1"
+        },
+        {
           "command": "fusi-tools.gitWorktree.refresh",
           "when": "view == fusi-tools.gitWorktree.view",
-          "group": "navigation"
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fusi-tools.gitWorktree.createWorktree",
+          "when": "view == fusi-tools.gitWorktree.view && viewItem == repository",
+          "group": "inline"
+        },
+        {
+          "command": "fusi-tools.gitWorktree.deleteWorktree",
+          "when": "view == fusi-tools.gitWorktree.view && viewItem == worktree",
+          "group": "inline"
         }
       ]
     }

@@ -1,6 +1,6 @@
-import * as vscode from "vscode";
 import * as cp from "child_process";
 import * as path from "path";
+import { GitRepository } from "../git/shared/repositoryResolver";
 
 export interface SmartChange {
   relativePath: string;
@@ -15,31 +15,16 @@ export interface SmartChange {
 }
 
 export class GitService {
-  private get gitApi() {
-    const extension = vscode.extensions.getExtension("vscode.git");
-    return extension?.exports?.getAPI(1);
-  }
-
-  private get repository() {
-    const api = this.gitApi;
-    if (!api || api.repositories.length === 0) {
-      return undefined;
-    }
-    // In a real scenario, might want to pick the repo based on active editor
-    // For now, simplicity: pick the first one
-    return api.repositories[0];
-  }
-
   /**
    * 获取最近的 N 条 commit message (用于 Few-shot 学习)
    * @param count 获取的条数，默认 5
    * @param maxLength 每条消息的最大长度，默认 100
    */
   async getRecentCommits(
+    repo: GitRepository,
     count: number = 5,
     maxLength: number = 100,
   ): Promise<string> {
-    const repo = this.repository;
     if (!repo) return "(No recent commits)";
 
     try {
@@ -70,8 +55,7 @@ export class GitService {
   /**
    * 1. 分析暂存区变更，返回结构化数据
    */
-  async analyzeChanges(): Promise<SmartChange[] | null> {
-    const repo = this.repository;
+  async analyzeChanges(repo: GitRepository): Promise<SmartChange[] | null> {
     if (!repo) return null;
 
     const changes = repo.state.indexChanges;
@@ -247,8 +231,10 @@ export class GitService {
    * 2. 将分析结果格式化为 Prompt 字符串
    *    (包含总大小检查，如果过大则降级为 stat)
    */
-  async formatSmartDiff(changes: SmartChange[]): Promise<string> {
-    const repo = this.repository;
+  async formatSmartDiff(
+    repo: GitRepository,
+    changes: SmartChange[],
+  ): Promise<string> {
     if (!repo || !changes || changes.length === 0) return "";
 
     // 检查是否已经是 "文件过多" 的状态
@@ -302,10 +288,10 @@ export class GitService {
   /**
    * 旧接口兼容
    */
-  async getSmartDiff(): Promise<string | null> {
-    const analysis = await this.analyzeChanges();
+  async getSmartDiff(repo: GitRepository): Promise<string | null> {
+    const analysis = await this.analyzeChanges(repo);
     if (!analysis) return null;
-    return this.formatSmartDiff(analysis);
+    return this.formatSmartDiff(repo, analysis);
   }
 
   /**
@@ -525,8 +511,7 @@ export class GitService {
   /**
    * 将提交信息设置到 SCM 输入框。
    */
-  setCommitMessage(message: string) {
-    const repo = this.repository;
+  setCommitMessage(message: string, repo: GitRepository) {
     if (repo) {
       repo.inputBox.value = message;
     }

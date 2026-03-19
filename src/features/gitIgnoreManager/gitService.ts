@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
+import { getGitRepositories } from '../git/shared/repositoryResolver';
 
 const execAsync = promisify(exec);
 
@@ -140,21 +140,15 @@ export async function isFileTracked(repoRoot: string, filePath: string): Promise
  * 获取所有工作区中的 Git 仓库根目录
  */
 export async function getAllRepoRoots(): Promise<string[]> {
-    const folders = vscode.workspace.workspaceFolders;
-    if (!folders) {
-        return [];
-    }
-
-    const roots: string[] = [];
+    const repositories = getGitRepositories();
     const seen = new Set<string>();
+    const roots: string[] = [];
 
-    const rootPromises = folders.map(folder => getRepoRoot(folder.uri.fsPath));
-    const results = await Promise.all(rootPromises);
-
-    for (const root of results) {
-        if (root && !seen.has(root)) {
-            roots.push(root);
+    for (const repository of repositories) {
+        const root = repository.rootUri.fsPath;
+        if (!seen.has(root)) {
             seen.add(root);
+            roots.push(root);
         }
     }
 

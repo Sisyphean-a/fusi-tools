@@ -40,7 +40,15 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('fusi-tools.gitWorktree.pull', commands.pull),
         vscode.commands.registerCommand('fusi-tools.gitWorktree.push', commands.push),
         vscode.commands.registerCommand('fusi-tools.gitWorktree.revealInExplorer', commands.revealInExplorer),
-        vscode.commands.registerCommand('fusi-tools.gitWorktree.openInVsCode', commands.openInVsCode)
+        vscode.commands.registerCommand('fusi-tools.gitWorktree.openInVsCode', commands.openInVsCode),
+        vscode.commands.registerCommand('fusi-tools.gitWorktree.createWorktree', async (repoRootOrItem?: unknown) => {
+            await commands.createNewWorktree(repoRootOrItem);
+            await provider.refresh();
+        }),
+        vscode.commands.registerCommand('fusi-tools.gitWorktree.deleteWorktree', async (repoOrItem: unknown, worktreePath?: string) => {
+            await commands.deleteWorktree(repoOrItem, worktreePath);
+            await provider.refresh();
+        })
     );
 
     context.subscriptions.push(treeView, provider);
