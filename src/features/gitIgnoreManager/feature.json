@@ -10,6 +10,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.gitIgnoreManager",
         "title": "FT: Git Ignore Manager",
         "properties": {
           "fusi-tools.gitIgnoreManager.enabled": {

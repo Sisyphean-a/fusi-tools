@@ -10,6 +10,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.aiCommit",
         "title": "FT: AI Commit",
         "properties": {
           "fusi-tools.aiCommit.enabled": {

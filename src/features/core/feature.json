@@ -2,6 +2,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.general",
         "title": "FT: 通用设置",
         "properties": {
           "fusi-tools.logLevel": {

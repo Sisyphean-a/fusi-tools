@@ -2,6 +2,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.scratchpad",
         "title": "FT: Scratchpad",
         "properties": {
           "fusi-tools.scratchpad.enabled": {

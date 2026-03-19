@@ -87,6 +87,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.general",
         "title": "FT: 通用设置",
         "properties": {
           "fusi-tools.logLevel": {
@@ -112,6 +113,7 @@
         }
       },
       {
+        "id": "fusi-tools.aiCommit",
         "title": "FT: AI Commit",
         "properties": {
           "fusi-tools.aiCommit.enabled": {
@@ -150,6 +152,7 @@
         }
       },
       {
+        "id": "fusi-tools.gitIgnoreManager",
         "title": "FT: Git Ignore Manager",
         "properties": {
           "fusi-tools.gitIgnoreManager.enabled": {
@@ -187,17 +190,19 @@
         }
       },
       {
+        "id": "fusi-tools.gitWorktree",
         "title": "FT: Git Worktree",
         "properties": {
           "fusi-tools.gitWorktree.enabled": {
             "type": "boolean",
             "default": true,
             "order": 0,
-            "markdownDescription": "启用或禁用 **Git 工作树管理** 功能 (需要重启)。\\n\\n管理 Git Worktrees，支持快速切换和操作。"
+            "markdownDescription": "启用或禁用 **Git 工作树管理** 功能 (需要重启)。\n\n管理 Git Worktrees，支持快速切换和操作。"
           }
         }
       },
       {
+        "id": "fusi-tools.projectFavorites",
         "title": "FT: Project Favorites",
         "properties": {
           "fusi-tools.projectFavorites.enabled": {
@@ -209,6 +214,7 @@
         }
       },
       {
+        "id": "fusi-tools.resourceManager",
         "title": "FT: Resource Manager",
         "properties": {
           "fusi-tools.resourceManager.enabled": {
@@ -248,6 +254,7 @@
         }
       },
       {
+        "id": "fusi-tools.scratchpad",
         "title": "FT: Scratchpad",
         "properties": {
           "fusi-tools.scratchpad.enabled": {
@@ -259,6 +266,7 @@
         }
       },
       {
+        "id": "fusi-tools.smartTranslate",
         "title": "FT: Smart Translate",
         "properties": {
           "fusi-tools.smartTranslate.enabled": {

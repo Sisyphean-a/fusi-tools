@@ -2,6 +2,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.smartTranslate",
         "title": "FT: Smart Translate",
         "properties": {
           "fusi-tools.smartTranslate.enabled": {

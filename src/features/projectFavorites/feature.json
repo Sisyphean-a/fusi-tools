@@ -13,6 +13,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.projectFavorites",
         "title": "FT: Project Favorites",
         "properties": {
           "fusi-tools.projectFavorites.enabled": {

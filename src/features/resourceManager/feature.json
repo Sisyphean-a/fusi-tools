@@ -9,6 +9,7 @@
   "contributes": {
     "configuration": [
       {
+        "id": "fusi-tools.resourceManager",
         "title": "FT: Resource Manager",
         "properties": {
           "fusi-tools.resourceManager.enabled": {
