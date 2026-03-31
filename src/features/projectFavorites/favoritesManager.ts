@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
+import * as crypto from "crypto";
 import { Logger } from "../../logger";
 
 // Helper for generating IDs if uuid is not available or too heavy
@@ -8,6 +11,11 @@ function generateId(): string {
     Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15)
   );
+}
+
+// Helper for generating project key hash
+function hashPath(input: string): string {
+  return crypto.createHash("md5").update(input).digest("hex").substring(0, 12);
 }
 
 export interface FavoriteFile {
@@ -32,18 +40,19 @@ interface FavoriteData {
   categories: FavoriteCategory[];
 }
 
-const STORAGE_KEY = "fusi-tools.projectFavorites.data";
+const STORAGE_DIR = path.join(os.homedir(), ".fusi-tools", "favorites");
 
 export class FavoritesManager {
   private _data: FavoriteData;
   private _context: vscode.ExtensionContext;
+  private _storagePath: string | null = null;
   private _onDidChangeTreeData: vscode.EventEmitter<
     void | FavoriteCategory | undefined
   > = new vscode.EventEmitter<void | FavoriteCategory | undefined>();
   readonly onDidChangeTreeData: vscode.Event<
     void | FavoriteCategory | undefined
   > = this._onDidChangeTreeData.event;
-  
+
   // 文件存在性缓存
   private _fileExistenceCache: Map<string, { exists: boolean; timestamp: number }> = new Map();
   private _cacheExpirationMs: number = 30000; // 30秒缓存过期时间
@@ -51,19 +60,21 @@ export class FavoritesManager {
 
   constructor(context: vscode.ExtensionContext) {
     this._context = context;
-    this._data = this._context.workspaceState.get<FavoriteData>(STORAGE_KEY, {
-      files: {},
-      categories: [
-        {
-          id: "default",
-          name: "默认分类",
-          expanded: true,
-          fileIds: [],
-        },
-      ],
-    });
+    this._storagePath = this.getStoragePath();
 
-    // Ensure data integrity (in case of corruption or fresh start)
+    if (this._storagePath && fs.existsSync(this._storagePath)) {
+      try {
+        const content = fs.readFileSync(this._storagePath, "utf-8");
+        this._data = JSON.parse(content);
+      } catch (e) {
+        Logger.warn("读取配置文件失败，使用默认配置", e);
+        this._data = this.getDefaultData();
+      }
+    } else {
+      this._data = this.getDefaultData();
+    }
+
+    // Ensure data integrity
     if (!this._data.categories || this._data.categories.length === 0) {
       this._data.categories = [
         {
@@ -82,8 +93,91 @@ export class FavoritesManager {
     this.startPeriodicFileCheck();
   }
 
+  private getDefaultData(): FavoriteData {
+    return {
+      files: {},
+      categories: [
+        {
+          id: "default",
+          name: "默认分类",
+          expanded: true,
+          fileIds: [],
+        },
+      ],
+    };
+  }
+
+  /**
+   * 获取项目唯一标识
+   * Git 仓库使用 git-common-dir 路径 hash（支持 worktree）
+   * 非 Git 仓库使用 workspace 根目录路径 hash
+   */
+  private getProjectKey(): string | null {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      return null;
+    }
+
+    const rootPath = workspaceFolders[0].uri.fsPath;
+    const gitDir = path.join(rootPath, ".git");
+
+    // 检查是否是 Git 仓库
+    if (fs.existsSync(gitDir)) {
+      try {
+        // 如果 .git 是文件（worktree 情况），读取其内容获取真正的 git 目录
+        const gitStat = fs.statSync(gitDir);
+        if (gitStat.isFile()) {
+          const gitContent = fs.readFileSync(gitDir, "utf-8");
+          // 格式: gitdir: /path/to/.git/worktrees/name
+          const match = gitContent.match(/gitdir:\s*(.+)/);
+          if (match) {
+            // 获取 git common dir (主仓库的 .git 目录)
+            const worktreeGitDir = match[1].trim();
+            // worktree 的 gitdir 通常在 .git/worktrees/xxx 下
+            // common dir 是 worktreeGitDir 的父目录的父目录
+            const commonDir = path.dirname(path.dirname(worktreeGitDir));
+            return hashPath(commonDir);
+          }
+        } else if (gitStat.isDirectory()) {
+          // 普通仓库，直接使用 .git 目录路径
+          return hashPath(gitDir);
+        }
+      } catch (e) {
+        Logger.warn("获取 Git 目录失败", e);
+      }
+    }
+
+    // 非 Git 仓库，使用 workspace 根目录
+    return hashPath(rootPath);
+  }
+
+  /**
+   * 获取存储文件路径
+   */
+  private getStoragePath(): string | null {
+    const projectKey = this.getProjectKey();
+    if (!projectKey) {
+      return null;
+    }
+    return path.join(STORAGE_DIR, `${projectKey}.json`);
+  }
+
   private saveData() {
-    this._context.workspaceState.update(STORAGE_KEY, this._data);
+    if (!this._storagePath) {
+      // 没有工作区时，回退到 workspaceState
+      this._context.workspaceState.update("fusi-tools.projectFavorites.data", this._data);
+    } else {
+      try {
+        // 确保目录存在
+        const dir = path.dirname(this._storagePath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(this._storagePath, JSON.stringify(this._data, null, 2), "utf-8");
+      } catch (e) {
+        Logger.error("保存配置文件失败", e);
+      }
+    }
     this._onDidChangeTreeData.fire();
   }
 
