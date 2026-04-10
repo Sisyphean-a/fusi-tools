@@ -30,6 +30,12 @@ export function activate(context: vscode.ExtensionContext) {
       },
     ),
     vscode.commands.registerCommand(
+      "fusi-tools.copyCodeReference",
+      () => {
+        ResourceCommands.copyCodeReference();
+      },
+    ),
+    vscode.commands.registerCommand(
       "fusi-tools.generateTree",
       (uri: vscode.Uri) => {
         ResourceCommands.generateTree(uri);

@@ -2,6 +2,7 @@
   "activationEvents": [
     "onCommand:fusi-tools.copyName",
     "onCommand:fusi-tools.copyRelativeName",
+    "onCommand:fusi-tools.copyCodeReference",
     "onCommand:fusi-tools.generateTree",
     "onCommand:fusi-tools.copyFile",
     "onCommand:fusi-tools.customCopy"
@@ -58,6 +59,11 @@
       {
         "command": "fusi-tools.copyRelativeName",
         "title": "@Copy Name",
+        "category": "Fusi Tools"
+      },
+      {
+        "command": "fusi-tools.copyCodeReference",
+        "title": "复制代码地址",
         "category": "Fusi Tools"
       },
       {
@@ -124,6 +130,13 @@
           "command": "fusi-tools.copyFile",
           "group": "fusi-tools@3",
           "when": "resourceScheme == file"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "fusi-tools.copyCodeReference",
+          "group": "fusi-tools@1",
+          "when": "editorTextFocus && editorHasSelection && resourceScheme == file"
         }
       ]
     }

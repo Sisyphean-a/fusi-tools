@@ -19,6 +19,31 @@ export class Logger {
   private static _outputChannel: vscode.OutputChannel;
   private static _logLevel: LogLevel = LogLevel.INFO;
 
+  private static appendErrorDetails(error: unknown): void {
+    if (!error) {
+      return;
+    }
+
+    if (error instanceof Error) {
+      this.outputChannel.appendLine(`  Message: ${error.message}`);
+      if (error.stack) {
+        this.outputChannel.appendLine(`  Stack: ${error.stack}`);
+      }
+      return;
+    }
+
+    if (typeof error === "object") {
+      try {
+        this.outputChannel.appendLine(`  Details: ${JSON.stringify(error, null, 2)}`);
+      } catch {
+        this.outputChannel.appendLine("  Details: [无法序列化错误对象]");
+      }
+      return;
+    }
+
+    this.outputChannel.appendLine(`  Details: ${error}`);
+  }
+
   /**
    * 获取输出通道
    */
@@ -91,10 +116,11 @@ export class Logger {
    * 记录警告信息
    * @param message 日志消息
    */
-  public static warn(message: string): void {
+  public static warn(message: string, error?: unknown): void {
     if (this._logLevel <= LogLevel.WARN) {
       const timestamp = new Date().toLocaleTimeString();
       this.outputChannel.appendLine(`[${timestamp}] [WARN] ${message}`);
+      this.appendErrorDetails(error);
     }
   }
 
@@ -107,23 +133,7 @@ export class Logger {
     if (this._logLevel <= LogLevel.ERROR) {
       const timestamp = new Date().toLocaleTimeString();
       this.outputChannel.appendLine(`[${timestamp}] [ERROR] ${message}`);
-      if (error) {
-        // 优化错误对象的序列化
-        if (error instanceof Error) {
-          this.outputChannel.appendLine(`  Message: ${error.message}`);
-          if (error.stack) {
-            this.outputChannel.appendLine(`  Stack: ${error.stack}`);
-          }
-        } else if (typeof error === "object") {
-          try {
-            this.outputChannel.appendLine(`  Details: ${JSON.stringify(error, null, 2)}`);
-          } catch {
-            this.outputChannel.appendLine(`  Details: [无法序列化错误对象]`);
-          }
-        } else {
-          this.outputChannel.appendLine(`  Details: ${error}`);
-        }
-      }
+      this.appendErrorDetails(error);
     }
   }
 

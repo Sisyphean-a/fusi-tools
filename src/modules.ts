@@ -125,6 +125,7 @@ export const resourceManagerModule: FeatureModule = {
   commandTriggers: [
     'fusi-tools.copyName',
     'fusi-tools.copyRelativeName',
+    'fusi-tools.copyCodeReference',
     'fusi-tools.generateTree',
     'fusi-tools.copyFile',
     'fusi-tools.customCopy'

@@ -3,6 +3,7 @@ import * as path from "path";
 import * as cp from "child_process";
 import * as os from "os";
 import { TreeGenerator } from "./treeGenerator";
+import { buildCodeReferenceText } from "./codeReference";
 import { Logger } from "../../logger";
 
 export class ResourceCommands {
@@ -43,6 +44,38 @@ export class ResourceCommands {
     const textToCopy = ` @${relativePath}`;
     await vscode.env.clipboard.writeText(textToCopy);
     Logger.info(`已复制相对路径到剪贴板: ${textToCopy}`);
+  }
+
+  /**
+   * 复制当前选中代码的地址到剪贴板
+   */
+  public static async copyCodeReference() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage("当前没有活动编辑器，无法复制代码地址。");
+      return;
+    }
+
+    if (editor.selection.isEmpty) {
+      vscode.window.showWarningMessage("请先选中一段代码，再复制代码地址。");
+      return;
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+    if (!workspaceFolder) {
+      vscode.window.showWarningMessage("当前文件不在工作区内，无法复制代码地址。");
+      return;
+    }
+
+    const textToCopy = buildCodeReferenceText({
+      workspaceRoot: workspaceFolder.uri.fsPath,
+      filePath: editor.document.uri.fsPath,
+      selection: editor.selection,
+    });
+
+    await vscode.env.clipboard.writeText(textToCopy);
+    Logger.info(`已复制代码地址到剪贴板: ${textToCopy}`);
+    vscode.window.showInformationMessage(`已复制代码地址: ${textToCopy}`);
   }
 
   /**
