@@ -17,6 +17,40 @@
             "order": 1,
             "markdownDescription": "翻译结果显示时长 (毫秒)。"
           },
+          "fusi-tools.smartTranslate.provider": {
+            "type": "string",
+            "enum": [
+              "sisyphean",
+              "google",
+              "deeplx"
+            ],
+            "default": "sisyphean",
+            "order": 2,
+            "markdownDescription": "选择智能翻译使用的翻译源。",
+            "enumDescriptions": [
+              "当前内置翻译接口（fanyi.sisyphean.top）",
+              "Google Translate 接口（translate.googleapis.com）",
+              "DeepLX 接口（需要配置请求地址和 API Key）"
+            ]
+          },
+          "fusi-tools.smartTranslate.deeplx.endpoint": {
+            "type": "string",
+            "default": "",
+            "order": 3,
+            "markdownDescription": "DeepLX 请求地址。示例：`https://api.deeplx.org/xxxxxx/translate`",
+            "markdownAttributes": {
+              "placeholder": "https://api.deeplx.org/xxxxxx/translate"
+            }
+          },
+          "fusi-tools.smartTranslate.deeplx.apiKey": {
+            "type": "string",
+            "default": "",
+            "order": 4,
+            "markdownDescription": "DeepLX API Key。仅在翻译源选择 `deeplx` 时使用。",
+            "markdownAttributes": {
+              "placeholder": "your-api-key"
+            }
+          },
           "fusi-tools.smartTranslate.statusBarPosition": {
             "type": "string",
             "enum": [
@@ -24,7 +58,7 @@
               "right"
             ],
             "default": "right",
-            "order": 2,
+            "order": 5,
             "markdownDescription": "翻译状态栏位置。",
             "enumDescriptions": [
               "显示在状态栏左侧",

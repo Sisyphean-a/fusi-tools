@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 import { Logger } from "../../logger";
-import { TranslatorService, TranslationResult } from "./translator";
+import {
+  TranslationProvider,
+  TranslationResult,
+  TranslatorService,
+} from "./translator";
 import { StatusBarManager } from "./ui/statusBar";
 import { NameGenerator } from "./nameGenerator";
 import { NamingPanel } from "./ui/namingPanel";
@@ -42,23 +46,13 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // 检查配置是否启用
-  const config = vscode.workspace.getConfiguration("fusi-tools.smartTranslate");
-  if (config.get<boolean>("enabled", true)) {
-    startFeature();
-  }
+  syncFeatureState();
 
   // 监听配置变化
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("fusi-tools.smartTranslate.enabled")) {
-        const newEnabled = vscode.workspace
-          .getConfiguration("fusi-tools.smartTranslate")
-          .get<boolean>("enabled", true);
-        if (newEnabled) {
-          startFeature();
-        } else {
-          stopFeature();
-        }
+      if (e.affectsConfiguration("fusi-tools.smartTranslate")) {
+        syncFeatureState();
       }
     })
   );
@@ -90,7 +84,7 @@ function startFeature() {
   }
 
   // 初始化服务
-  translatorService = new TranslatorService();
+  translatorService = new TranslatorService(loadTranslatorSettings());
   statusBarManager = new StatusBarManager();
   nameGenerator = new NameGenerator();
   namingPanel = new NamingPanel();
@@ -132,6 +126,33 @@ function stopFeature() {
 
   isEnabled = false;
   Logger.info("智能翻译功能已停止。");
+}
+
+function syncFeatureState() {
+  const config = vscode.workspace.getConfiguration("fusi-tools.smartTranslate");
+  const enabled = config.get<boolean>("enabled", true);
+
+  if (!enabled) {
+    stopFeature();
+    return;
+  }
+
+  restartFeature();
+}
+
+function restartFeature() {
+  stopFeature();
+  startFeature();
+}
+
+function loadTranslatorSettings() {
+  const config = vscode.workspace.getConfiguration("fusi-tools.smartTranslate");
+
+  return {
+    deeplxApiKey: config.get<string>("deeplx.apiKey", "").trim(),
+    deeplxEndpoint: config.get<string>("deeplx.endpoint", "").trim(),
+    provider: config.get<TranslationProvider>("provider", "sisyphean"),
+  };
 }
 
 async function handleSelectionChange(
@@ -307,7 +328,9 @@ async function showStatusMenu(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (editor && !editor.selection.isEmpty) {
       const text = editor.document.getText(editor.selection).trim();
-      if (text) await translateSelectedText(text);
+      if (text) {
+        await translateSelectedText(text);
+      }
     }
   }
 }
