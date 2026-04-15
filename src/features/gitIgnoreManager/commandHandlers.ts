@@ -85,7 +85,7 @@ export class CommandHandlers {
             await this.stateManager.reloadRepo(repoRoot);
 
             const typeLabel = type === 'assume' ? 'Assume-Unchanged' : 'Skip-Worktree';
-            vscode.window.showInformationMessage(`已使用 ${typeLabel} 忽略文件: ${path.basename(filePath)}`);
+            Logger.info(`Git Ignore Manager: Ignored file with ${typeLabel}: ${path.basename(filePath)}`);
 
         } catch (error: any) {
             const message = error.stderr || error.message || '未知错误';
@@ -175,7 +175,7 @@ export class CommandHandlers {
             // 刷新状态
             await this.stateManager.reloadRepo(repoRoot);
 
-            vscode.window.showInformationMessage(`已解除忽略: ${fileName}`);
+            Logger.info(`Git Ignore Manager: Unignored file: ${fileName}`);
 
         } catch (error: any) {
             const message = error.stderr || error.message || '未知错误';
@@ -212,9 +212,7 @@ export class CommandHandlers {
             );
             
             if (config.getShowCommandHints()) {
-                vscode.window.showInformationMessage(
-                    `已刷新，共 ${totalFiles} 个忽略文件`
-                );
+                Logger.info(`Git Ignore Manager: Refreshed ignored files list: ${totalFiles}`);
             }
 
         } catch (error: any) {

@@ -5,6 +5,7 @@ import * as os from "os";
 import { TreeGenerator } from "./treeGenerator";
 import { buildCodeReferenceText } from "./codeReference";
 import { Logger } from "../../logger";
+import { copyTextToClipboard } from "../../utils/clipboard";
 
 export class ResourceCommands {
   /**
@@ -17,7 +18,7 @@ export class ResourceCommands {
     }
 
     const fileName = path.basename(uri.fsPath);
-    await vscode.env.clipboard.writeText(fileName);
+    await copyTextToClipboard(fileName);
     Logger.info(`已复制文件名到剪贴板: ${fileName}`);
   }
 
@@ -42,7 +43,7 @@ export class ResourceCommands {
     relativePath = relativePath.split(path.sep).join("/");
 
     const textToCopy = ` @${relativePath}`;
-    await vscode.env.clipboard.writeText(textToCopy);
+    await copyTextToClipboard(textToCopy);
     Logger.info(`已复制相对路径到剪贴板: ${textToCopy}`);
   }
 
@@ -73,9 +74,8 @@ export class ResourceCommands {
       selection: editor.selection,
     });
 
-    await vscode.env.clipboard.writeText(textToCopy);
+    await copyTextToClipboard(textToCopy);
     Logger.info(`已复制代码地址到剪贴板: ${textToCopy}`);
-    vscode.window.showInformationMessage(`已复制代码地址: ${textToCopy}`);
   }
 
   /**
@@ -138,8 +138,7 @@ export class ResourceCommands {
 
       const finalOutput = `${relativePath}\n${treeOutput}`;
 
-      await vscode.env.clipboard.writeText(finalOutput);
-      vscode.window.showInformationMessage("目录结构树已复制到剪贴板！");
+      await copyTextToClipboard(finalOutput);
       Logger.info(`已生成目录树：${uri.fsPath}，深度：${selected.value}`);
     } catch (error) {
       Logger.error("生成目录树失败", error);
@@ -276,8 +275,7 @@ export class ResourceCommands {
 
     // 替换占位符，添加 @ 前缀
     const textToCopy = selected.template.replace(/{path}/g, `@${relativePath}`);
-    await vscode.env.clipboard.writeText(textToCopy);
+    await copyTextToClipboard(textToCopy);
     Logger.info(`已复制自定义模板到剪贴板: ${textToCopy}`);
-    vscode.window.showInformationMessage(`已复制: ${textToCopy}`);
   }
 }

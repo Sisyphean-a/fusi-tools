@@ -8,6 +8,7 @@ import {
 import { StatusBarManager } from "./ui/statusBar";
 import { NameGenerator } from "./nameGenerator";
 import { NamingPanel } from "./ui/namingPanel";
+import { copyTextToClipboard } from "../../utils/clipboard";
 
 let translatorService: TranslatorService | undefined;
 let statusBarManager: StatusBarManager | undefined;
@@ -71,11 +72,6 @@ async function toggleFeature() {
     vscode.ConfigurationTarget.Global
   );
 
-  if (!currentEnabled) {
-    vscode.window.showInformationMessage("Smart Translate 已启用");
-  } else {
-    vscode.window.showInformationMessage("Smart Translate 已禁用");
-  }
 }
 
 function startFeature() {
@@ -306,8 +302,7 @@ async function showStatusMenu(): Promise<void> {
   }
 
   if (selected.label.includes("复制译文")) {
-    await vscode.env.clipboard.writeText(lastTranslationResult.translatedText);
-    vscode.window.showInformationMessage("已复制译文");
+    await copyTextToClipboard(lastTranslationResult.translatedText);
   } else if (selected.label.includes("替换选中内容")) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {

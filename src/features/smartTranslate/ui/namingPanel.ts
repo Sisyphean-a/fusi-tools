@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { NamingOption } from "../nameGenerator";
+import { copyTextToClipboard } from "../../../utils/clipboard";
 
 export class NamingPanel {
   constructor() {}
@@ -64,8 +65,7 @@ export class NamingPanel {
 
   private async copyToClipboard(text: string): Promise<void> {
     try {
-      await vscode.env.clipboard.writeText(text);
-      vscode.window.showInformationMessage(`已复制: ${text}`);
+      await copyTextToClipboard(text);
     } catch (error) {
       vscode.window.showErrorMessage("复制失败");
     }
@@ -77,8 +77,7 @@ export class NamingPanel {
       .join("\n");
 
     try {
-      await vscode.env.clipboard.writeText(allFormats);
-      vscode.window.showInformationMessage("已复制所有命名格式");
+      await copyTextToClipboard(allFormats);
     } catch (error) {
       vscode.window.showErrorMessage("复制失败");
     }
@@ -123,8 +122,6 @@ export class NamingPanel {
       await editor.edit((editBuilder) => {
         editBuilder.insert(position, text);
       });
-
-      vscode.window.showInformationMessage(`已插入: ${text}`);
     } catch (error) {
       vscode.window.showErrorMessage("插入失败");
     }
