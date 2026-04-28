@@ -107,9 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
           lastContext = { diff, projectMeta };
 
           // 调用快速 AI 服务
-          Logger.info(
-            `正在调用 AI 生成 (DeepSeek V3)... Diff 长度: ${diff.length}`,
-          );
+          Logger.info(`正在调用 AI 生成提交信息... Diff 长度: ${diff.length}`);
 
           await aiService.generate(
             diff,

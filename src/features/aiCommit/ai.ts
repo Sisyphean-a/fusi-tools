@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
 import { Logger } from "../../logger";
 import { FAST_PROMPT } from "./prompts";
+import {
+  buildChatRequestBody,
+  resolveAiCommitModel,
+  ResolvedAiModel,
+} from "./modelResolver";
 
 export interface CommitOption {
   type: string;
@@ -13,9 +18,21 @@ export class AiService {
     return vscode.workspace.getConfiguration("fusi-tools.aiCommit");
   }
 
+  private resolveConfiguredModel(): ResolvedAiModel {
+    const modelSetting = this.config.inspect<string>("model");
+    const userConfiguredModel =
+      modelSetting?.workspaceFolderValue ??
+      modelSetting?.workspaceValue ??
+      modelSetting?.globalValue;
+    const configuredModel =
+      userConfiguredModel ?? modelSetting?.defaultValue ?? "deepseek-v4-flash";
+
+    return resolveAiCommitModel(configuredModel, userConfiguredModel !== undefined);
+  }
+
   /**
    * 执行生成策略:
-   * 1. 发起快速请求 (V3) 生成结果。
+   * 1. 根据当前模型配置发起请求生成结果。
    * 2. 注入 Project Meta、Recent Commits 和 Change Summary 上下文。
    */
   async generate(
@@ -26,7 +43,7 @@ export class AiService {
   ) {
     const apiKey = this.config.get<string>("apiKey");
     const baseUrl = this.config.get<string>("baseUrl");
-    const fastModel = this.config.get<string>("model") || "deepseek-chat";
+    const resolvedModel = this.resolveConfiguredModel();
 
     if (!apiKey) {
       throw new Error("API Key is not configured.");
@@ -51,7 +68,7 @@ export class AiService {
       const options = await this.fetchFastOptions(
         baseUrl!,
         apiKey,
-        fastModel,
+        resolvedModel,
         systemPrompt,
         diff,
       );
@@ -80,30 +97,29 @@ export class AiService {
   private async fetchFastOptions(
     baseUrl: string,
     apiKey: string,
-    model: string,
+    resolvedModel: ResolvedAiModel,
     systemPrompt: string,
     diff: string,
   ): Promise<CommitOption[]> {
-    return this.callApi(baseUrl, apiKey, model, systemPrompt, diff);
+    return this.callApi(baseUrl, apiKey, resolvedModel, systemPrompt, diff);
   }
 
   private async callApi(
     baseUrl: string,
     apiKey: string,
-    model: string,
+    resolvedModel: ResolvedAiModel,
     systemPrompt: string,
     userContent: string,
   ): Promise<CommitOption[]> {
-    const requestBody = {
-      model: model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      stream: false,
-    };
+    const requestBody = buildChatRequestBody(
+      resolvedModel,
+      systemPrompt,
+      userContent,
+    );
 
-    Logger.info(`[AI 请求] 模型: ${model}, 字符数: ${userContent.length}`);
+    Logger.info(
+      `[AI 请求] 模型: ${resolvedModel.displayLabel}, 字符数: ${userContent.length}`,
+    );
 
     try {
       const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -117,7 +133,9 @@ export class AiService {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`${model} request failed: ${response.status} ${text}`);
+        throw new Error(
+          `${resolvedModel.displayLabel} request failed: ${response.status} ${text}`,
+        );
       }
 
       const data = (await response.json()) as any;
@@ -126,7 +144,7 @@ export class AiService {
 
       return this.parseResponse(content);
     } catch (error) {
-      Logger.error(`API 调用异常: ${model}`, error);
+      Logger.error(`API 调用异常: ${resolvedModel.displayLabel}`, error);
       // Don't swallow here, let caller handle
       throw error;
     }

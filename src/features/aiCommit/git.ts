@@ -248,7 +248,7 @@ export class GitService {
     let totalOutput = "";
     let isStatFallback = false;
 
-    // [Optimization] 提升 Token 限制至 200,000 字符 (适配 DeepSeek V3 128k context)
+    // [Optimization] 将输出上限控制在 200,000 字符以内，避免超出大模型上下文预算
     const MAX_CHARS = 200000;
 
     for (const change of changes) {

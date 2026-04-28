@@ -140,9 +140,9 @@
           },
           "fusi-tools.aiCommit.model": {
             "type": "string",
-            "default": "deepseek-chat",
+            "default": "deepseek-v4-flash",
             "order": 3,
-            "markdownDescription": "AI 模型名称 (例如 `deepseek-chat`)。"
+            "markdownDescription": "AI 模型名称 (例如 `deepseek-v4-flash`)。兼容 `deepseek-chat` / `deepseek-reasoner`，默认使用 `deepseek-v4-flash` 非思考模式。"
           },
           "fusi-tools.aiCommit.prompt": {
             "type": "string",

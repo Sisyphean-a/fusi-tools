@@ -20,12 +20,12 @@
 
 ### 🤖 AI Commit Assistant (AI 提交助手)
 
-基于 DeepSeek 模型的智能提交信息生成工具，支持混合策略生成。
+基于 DeepSeek 模型的智能提交信息生成工具。
 
 **特点：**
 
 - **多风格生成**：同时生成 Emoji (极简)、Conventional (规范)、Smart (深度思考) 三种风格的提交信息。
-- **混合模型策略**：结合 DeepSeek V3 (快速响应) 和 DeepSeek R1 (深度推理) 的优势。
+- **默认模型更新**：默认使用 `deepseek-v4-flash` 非思考模式，兼容 `deepseek-chat` / `deepseek-reasoner` 旧别名。
 - **Git 集成**：直接集成在源代码管理 (SCM) 视图中，一键生成并应用。
 - **智能分析**：自动分析暂存区 (Staged) 的代码变更。
 
