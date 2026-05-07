@@ -1,12 +1,4 @@
 {
-  "activationEvents": [
-    "onCommand:fusi-tools.copyName",
-    "onCommand:fusi-tools.copyRelativeName",
-    "onCommand:fusi-tools.copyCodeReference",
-    "onCommand:fusi-tools.generateTree",
-    "onCommand:fusi-tools.copyFile",
-    "onCommand:fusi-tools.customCopy"
-  ],
   "contributes": {
     "configuration": [
       {

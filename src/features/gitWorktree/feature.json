@@ -1,16 +1,4 @@
 {
-  "activationEvents": [
-    "onView:fusi-tools.gitWorktree.view",
-    "onCommand:fusi-tools.gitWorktree.refresh",
-    "onCommand:fusi-tools.gitWorktree.openIntegratedTerminal",
-    "onCommand:fusi-tools.gitWorktree.openExternalTerminal",
-    "onCommand:fusi-tools.gitWorktree.pull",
-    "onCommand:fusi-tools.gitWorktree.push",
-    "onCommand:fusi-tools.gitWorktree.revealInExplorer",
-    "onCommand:fusi-tools.gitWorktree.openInVsCode",
-    "onCommand:fusi-tools.gitWorktree.createWorktree",
-    "onCommand:fusi-tools.gitWorktree.deleteWorktree"
-  ],
   "contributes": {
     "configuration": [
       {

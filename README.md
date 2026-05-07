@@ -1,119 +1,167 @@
 # Fusi Tools
 
-一个轻量级的 VS Code 工具扩展集合。
+即插即用的 VS Code 效率工具箱。
 
 ## 功能列表
 
-### 📝 Scratchpad (便签本)
+### 📝 Scratchpad（随手记）
 
-一个位于底部面板的临时文本输入区域，用于快速记录临时笔记。
+底部面板的临时文本区域，用于快速记录零散笔记。
 
-**特点：**
+- 位于 VS Code 底部面板（与终端、输出、调试控制台并列）
+- 全宽度文本输入区域
+- 内容仅保存在内存中，重新加载窗口后清空
+- 自动适配明暗主题
+- 实时统计：总字符数 / 总行数
+- 选中统计：选中文本时显示选中部分的字符数和行数
 
-- 位置：VS Code 底部面板（与终端、输出、调试控制台并列）
-- 全宽度、全高度的文本输入区域
-- 内容仅保存在内存中，不会写入磁盘
-- 重新加载窗口或重启 VS Code 后内容会清空
-- 自动适配 VS Code 的明暗主题
-- **实时统计**：显示总字符数和行数
-- **选中统计**：选中文本时显示选中部分的字符数和行数
+### 🤖 AI Commit Assistant（AI 提交助手）
 
-### 🤖 AI Commit Assistant (AI 提交助手)
+基于 DeepSeek 模型的智能提交信息生成工具，集成在 SCM 视图中。
 
-基于 DeepSeek 模型的智能提交信息生成工具。
+- **预处理管线**：先查看 AI 对暂存变更的分析摘要（"查看预处理"），确认后再生成提交信息（"预处理后生成"），也可跳过预览直接生成（"直接生成"）
+- **默认模型**：`deepseek-v4-flash`（非思考模式），兼容 `deepseek-chat` / `deepseek-reasoner` 旧别名
+- **透明调试**："View AI Prompt" 可查看实际发送给 AI 的完整 Prompt
+- **一键应用**：生成后直接在 SCM 视图中点击"应用提交信息"填充到 Git 输入框
 
-**特点：**
+### 🌐 Smart Translate（智能翻译）
 
-- **多风格生成**：同时生成 Emoji (极简)、Conventional (规范)、Smart (深度思考) 三种风格的提交信息。
-- **默认模型更新**：默认使用 `deepseek-v4-flash` 非思考模式，兼容 `deepseek-chat` / `deepseek-reasoner` 旧别名。
-- **Git 集成**：直接集成在源代码管理 (SCM) 视图中，一键生成并应用。
-- **智能分析**：自动分析暂存区 (Staged) 的代码变更。
+选中即译的开发辅助工具，特别优化了变量命名和代码注释场景。
 
-### 🌐 Smart Translate (智能翻译)
+- **自动识别**：选中代码或注释，自动进行英汉互译
+- **变量命名建议**：选中中文描述，生成驼峰 / 下划线风格的变量名
+- **多翻译源**：
+  - `sisyphean`（默认）：内置翻译接口，无需配置
+  - `google`：Google Translate 接口
+  - `deeplx`：DeepLX 接口，需自行配置请求地址和 API Key
+- **状态栏显示**：翻译结果悬浮在状态栏展示，不打断心流
+- **开关控制**：可通过命令面板（`启用/禁用 智能翻译`）随时切换
 
-即选即译的开发辅助工具，特别优化了变量命名和代码注释的翻译场景。
+### 📂 Resource Manager（资源管理增强）
 
-**特点：**
+增强 VS Code 资源管理器的右键菜单，提供便捷的文件路径复制和目录结构生成。
 
-- **自动识别**：选中代码或注释，自动进行英汉互译。
-- **变量命名建议**：选中中文描述，可生成符合驼峰/下划线规范的变量名建议。
-- **状态栏显示**：翻译结果直接悬浮显示或在状态栏展示，不打断心流。
+- **Copy Name**：快速复制文件名
+- **@Copy Name**：复制相对于项目根目录的路径（带 `@` 前缀）
+- **Copy File**：复制文件完整内容到剪贴板
+- **自定义复制**：基于模板的复制（如生成"请先阅读 @path/to/file，了解项目结构"），模板可在设置中自定义
+- **复制代码地址**：在编辑器中选中代码后，右键复制 `@相对路径:起止行` 格式的位置引用
+- **Generate Tree**：为当前文件夹生成 ASCII 目录树结构，方便撰写文档
 
-### 📂 Resource Manager (资源管理增强)
+### ⭐ Project Favorites（项目常用文件）
 
-增强了 VS Code 本地资源管理器的功能，提供便捷的文件路径复制和目录结构生成工具。
+项目级收藏夹，在复杂项目中快速定位核心文件。
 
-**特点：**
+- **独立视图**：侧边栏独立的"常用文件"视图容器
+- **分组管理**：自定义分类文件夹，按模块整理核心文件
+- **文件别名**：为收藏文件设置别名，不修改物理文件名
+- **支持文件夹收藏**：收藏整个文件夹，也可收藏已删除文件的"幽灵条目"
+- **快速访问**：右键菜单一键添加 / 移除选中文件
 
-- **Copy Name**：快速复制文件名。
-- **@Copy Name**：复制相对于项目根目录的路径 (带 @ 前缀)。
-- **复制代码地址**：在编辑器中选中代码后，右键复制 `@相对路径:起止行` 格式的位置引用。
-- **Generate Tree**：为当前文件夹生成 ASCII 格式的目录树结构，方便文档编写。
+### 🛡️ Git Ignore Manager（Git 忽略规则管理）
 
-### ⭐ Project Favorites (项目常用文件)
+管理 Git 的 `assume-unchanged` 和 `skip-worktree` 标记，用于忽略本地文件变动（如配置文件）而不提交到远程。
 
-项目级别的收藏夹，让你在复杂项目中快速定位核心文件。
+- **双模式**：`assume-unchanged` 和 `skip-worktree` 两种忽略模式
+- **可视化管理**：SCM 视图中独立的"忽略文件（Git）"列表
+- **快速操作**：右键菜单一键忽略 / 取消忽略；SCM 变更列表中直接忽略文件
+- **自动刷新**：视图获得焦点时自动刷新列表状态（可通过 `refreshOnFocus` 控制）
 
-**特点：**
+### 🌿 Git Worktree Helper（工作树助手）
 
-- **独立视图**：在侧边栏提供独立的 "常用文件" 视图。
-- **分组管理**：支持自定义分类文件夹，整理不同模块的核心文件。
-- **文件别名**：可以为收藏的文件设置别名，无需修改物理文件名。
-- **快速访问**：右键菜单一键添加/移除选中文件。
+VS Code 内置的 Git Worktree 管理工具，支持并行多分支开发。
 
-### 🛡️ Git Ignore Manager (Git 忽略规则管理)
-
-便捷管理 Git 的 `assume-unchanged` 和 `skip-worktree` 标记，用于忽略本地文件的特定变动（如配置文件）而不提交到远程仓库。
-
-**特点：**
-
-- **双模式支持**：支持 `assume-unchanged` 和 `skip-worktree` 两种忽略模式。
-- **可视乎管理**：在源代码管理 (SCM) 视图中提供独立的 "忽略文件" 列表。
-- **快速操作**：支持右键菜单一键忽略/取消忽略文件。
-- **自动刷新**：视图聚焦时自动刷新列表状态。
-
-### 🌿 Git Worktree Helper (工作树助手)
-
-VS Code 内置的 Git Worktree 管理工具，方便在不同分支间并行开发。
-
-**特点：**
-
-- **列表视图**：在 SCM 视图中展示当前仓库的所有 Worktree。
-- **便捷操作**：支持从侧边栏直接打开 Worktree（新窗口或当前窗口）。
-- **常用命令**：提供 Pull、Push、打开终端等常用快捷命令。
+- **列表视图**：SCM 视图中展示当前仓库所有 Worktree
+- **创建 / 删除**：直接在视图中新建或删除 Worktree
+- **便捷操作**：Pull、Push、在内置终端打开、在外部终端打开、在文件夹中打开、在编辑器内打开
 
 ## 设置项
 
-| 设置项                                          | 类型    | 默认值   | 描述                                |
-| ----------------------------------------------- | ------- | -------- | ----------------------------------- |
-| **AI Commit**                                   |         |          |                                     |
-| `fusi-tools.aiCommit.enabled`                   | boolean | `true`   | 启用/禁用 AI 提交助手               |
-| `fusi-tools.aiCommit.apiKey`                    | string  | `""`     | AI 服务的 API Key                   |
-| `fusi-tools.aiCommit.baseUrl`                   | string  | `...`    | AI 服务 Base URL                    |
-| `fusi-tools.aiCommit.model`                     | string  | `...`    | AI 模型名称                         |
-| `fusi-tools.aiCommit.prompt`                    | string  | `""`     | 自定义系统提示词                    |
-| **Resource Manager**                            |         |          |                                     |
-| `fusi-tools.resourceManager.enabled`            | boolean | `true`   | 启用/禁用 Resource Manager (需重启) |
-| **Smart Translate**                             |         |          |                                     |
-| `fusi-tools.smartTranslate.enabled`             | boolean | `true`   | 启用/禁用 智能翻译                  |
-| `fusi-tools.smartTranslate.displayDuration`     | number  | `5000`   | 翻译显示时长(ms)                    |
-| `fusi-tools.smartTranslate.statusBarPosition`   | string  | `right`  | 状态栏位置 (left/right)             |
-| **Project Favorites**                           |         |          |                                     |
-| `fusi-tools.projectFavorites.enabled`           | boolean | `true`   | 启用/禁用 常用文件功能              |
-| **Scratchpad**                                  |         |          |                                     |
-| `fusi-tools.scratchpad.enabled`                 | boolean | `true`   | 启用/禁用 Scratchpad                |
-| **Git Ignore Manager**                          |         |          |                                     |
-| `fusi-tools.gitIgnoreManager.enabled`           | boolean | `true`   | 启用/禁用 Git 忽略管理              |
-| `fusi-tools.gitIgnoreManager.defaultIgnoreType` | string  | `assume` | 默认忽略类型 (assume/skip)          |
-| `fusi-tools.gitIgnoreManager.showCommandHints`  | boolean | `true`   | 显示 Git 命令提示                   |
-| **Git Worktree**                                |         |          |                                     |
-| `fusi-tools.gitWorktree.enabled`                | boolean | `true`   | 启用/禁用 Git Worktree              |
+### 通用设置
+
+| 设置项                 | 类型   | 默认值 | 描述                                                         |
+| ---------------------- | ------ | ------ | ------------------------------------------------------------ |
+| `fusi-tools.logLevel`  | string | `info` | 日志输出级别：`debug` / `info` / `warn` / `error` / `none`   |
+
+### AI Commit
+
+| 设置项                            | 类型    | 默认值                       | 描述                                   |
+| --------------------------------- | ------- | ---------------------------- | -------------------------------------- |
+| `fusi-tools.aiCommit.enabled`     | boolean | `true`                       | 启用 / 禁用 AI 提交助手                |
+| `fusi-tools.aiCommit.apiKey`      | string  | `""`                         | AI 服务的 API Key                      |
+| `fusi-tools.aiCommit.baseUrl`     | string  | `https://api.deepseek.com`   | AI 服务 Base URL                       |
+| `fusi-tools.aiCommit.model`       | string  | `deepseek-v4-flash`          | AI 模型名称                            |
+| `fusi-tools.aiCommit.prompt`      | string  | `""`                         | 自定义系统提示词（覆盖默认设置）        |
+
+### Smart Translate
+
+| 设置项                                         | 类型    | 默认值       | 描述                                     |
+| ---------------------------------------------- | ------- | ------------ | ---------------------------------------- |
+| `fusi-tools.smartTranslate.enabled`            | boolean | `true`       | 启用 / 禁用智能翻译                      |
+| `fusi-tools.smartTranslate.displayDuration`    | number  | `5000`       | 翻译结果显示时长（毫秒）                 |
+| `fusi-tools.smartTranslate.provider`           | string  | `sisyphean`  | 翻译源：`sisyphean` / `google` / `deeplx` |
+| `fusi-tools.smartTranslate.deeplx.endpoint`    | string  | `""`         | DeepLX 请求地址                          |
+| `fusi-tools.smartTranslate.deeplx.apiKey`      | string  | `""`         | DeepLX API Key                           |
+| `fusi-tools.smartTranslate.statusBarPosition`  | string  | `right`      | 翻译状态栏位置：`left` / `right`          |
+
+### Resource Manager
+
+| 设置项                                          | 类型    | 默认值     | 描述                                     |
+| ----------------------------------------------- | ------- | ---------- | ---------------------------------------- |
+| `fusi-tools.resourceManager.enabled`            | boolean | `true`     | 启用 / 禁用 Resource Manager（需重启）     |
+| `fusi-tools.resourceManager.customCopyTemplates` | array   | 见下方说明 | 自定义复制模板列表                       |
+
+`customCopyTemplates` 默认值：
+
+```json
+[
+  {
+    "name": "阅读文档",
+    "template": "请先阅读 {path}，了解项目的功能和结构"
+  }
+]
+```
+
+使用 `{path}` 作为文件路径占位符（自动添加 `@` 前缀）。
+
+### Project Favorites
+
+| 设置项                                    | 类型    | 默认值 | 描述                         |
+| ----------------------------------------- | ------- | ------ | ---------------------------- |
+| `fusi-tools.projectFavorites.enabled`     | boolean | `true` | 启用 / 禁用项目常用文件       |
+
+### Scratchpad
+
+| 设置项                              | 类型    | 默认值 | 描述                     |
+| ----------------------------------- | ------- | ------ | ------------------------ |
+| `fusi-tools.scratchpad.enabled`     | boolean | `true` | 启用 / 禁用随手记         |
+
+### Git Ignore Manager
+
+| 设置项                                            | 类型    | 默认值     | 描述                                    |
+| ------------------------------------------------- | ------- | ---------- | --------------------------------------- |
+| `fusi-tools.gitIgnoreManager.enabled`             | boolean | `true`     | 启用 / 禁用 Git 忽略管理（需重启）       |
+| `fusi-tools.gitIgnoreManager.refreshOnFocus`      | boolean | `true`     | 视图获得焦点时自动刷新忽略列表           |
+| `fusi-tools.gitIgnoreManager.defaultIgnoreType`   | string  | `assume`   | 默认忽略类型：`assume` / `skip`          |
+| `fusi-tools.gitIgnoreManager.showCommandHints`    | boolean | `true`     | 在提示信息中显示 Git 命令               |
+
+### Git Worktree
+
+| 设置项                               | 类型    | 默认值 | 描述                             |
+| ------------------------------------ | ------- | ------ | -------------------------------- |
+| `fusi-tools.gitWorktree.enabled`     | boolean | `true` | 启用 / 禁用 Git Worktree（需重启） |
 
 ## 使用方法
 
-1. 安装扩展后，Scratchpad 会自动出现在底部面板区域
-2. 点击底部面板的 "Scratchpad" 标签页即可开始使用
-3. 如需禁用此功能，可在设置中将 `fusi-tools.scratchpad.enabled` 设为 `false`
+1. 安装扩展后，各功能模块自动激活（startup 模块）或按需激活（command 模块）
+2. **Scratchpad**：点击底部面板的"随手记"标签页即可使用
+3. **AI Commit**：打开 SCM 视图（`Ctrl+Shift+G`），在"AI 提交助手"面板中操作
+4. **Smart Translate**：选中文本后自动翻译（可在命令面板中开关）
+5. **Resource Manager**：在文件资源管理器或编辑器标签页右键，使用 Fusi Tools 菜单项
+6. **Project Favorites**：在侧边栏"常用文件"视图中管理收藏
+7. **Git Ignore Manager**：在 SCM 视图的"忽略文件（Git）"面板中管理
+8. **Git Worktree**：在 SCM 视图的"工作树 (Worktrees)"面板中管理
+9. 各功能均可通过 `fusi-tools.<feature>.enabled` 配置项单独开关
 
 ## 开发
 
@@ -124,18 +172,18 @@ npm install
 # 编译
 npm run compile
 
-# 监听模式 (Develop)
+# 监听模式（开发）
 npm run watch
 
-# 打包 (Build)
+# 打包
 vsce package
 ```
 
-> **注意**: 本项目采用了模块化配置。`package.json` 是通过 `scripts/generate-manifest.js` 脚本自动生成的。
-> 
-> - 修改配置请编辑 `src/features/*/feature.json`。
-> - `npm run watch` 和 `vsce package` 会自动触发配置生成。
-> - 手动生成配置可运行: `npm run generate:manifest`。
+> **注意**：本项目采用模块化配置架构。`package.json` 由 `scripts/generate-manifest.js` 自动生成。
+>
+> - 修改配置请编辑 `src/features/*/feature.json`
+> - `npm run watch` 和 `vsce package` 会自动触发配置生成
+> - 手动生成：`npm run generate:manifest`
 
 ## 许可证
 

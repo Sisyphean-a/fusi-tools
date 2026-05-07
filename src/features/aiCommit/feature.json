@@ -1,12 +1,4 @@
 {
-  "activationEvents": [
-    "onView:fusi-tools.aiCommitView",
-    "onCommand:fusi-tools.previewSmartDiff",
-    "onCommand:fusi-tools.generateSmart",
-    "onCommand:fusi-tools.generateDirect",
-    "onCommand:fusi-tools.applyCommit",
-    "onCommand:fusi-tools.viewAiPrompt"
-  ],
   "contributes": {
     "configuration": [
       {

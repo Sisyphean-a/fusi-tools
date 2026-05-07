@@ -1,15 +1,4 @@
 {
-  "activationEvents": [
-    "onView:fusi-tools.projectFavorites.view",
-    "onCommand:fusi-tools.projectFavorites.addFile",
-    "onCommand:fusi-tools.projectFavorites.moveToCategory",
-    "onCommand:fusi-tools.projectFavorites.addCategory",
-    "onCommand:fusi-tools.projectFavorites.removeFile",
-    "onCommand:fusi-tools.projectFavorites.removeCategory",
-    "onCommand:fusi-tools.projectFavorites.renameCategory",
-    "onCommand:fusi-tools.projectFavorites.renameFile",
-    "onCommand:fusi-tools.projectFavorites.refresh"
-  ],
   "contributes": {
     "configuration": [
       {
