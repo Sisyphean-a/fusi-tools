@@ -1,3 +1,11 @@
+---
+doc_type: feature-design
+feature: 2026-03-06-smart-translate-api
+status: approved
+summary: 将智能翻译切换到新的 single API
+tags: [smart-translate, api, translator]
+---
+
 # Smart Translate API Switch Design
 
 **Goal:** 将智能翻译底层接口从当前谷歌接口切换到 `https://fanyi.sisyphean.top/single`，同时保持现有交互与“中文转英文，非中文转中文”的业务规则不变。

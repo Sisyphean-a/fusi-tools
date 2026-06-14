@@ -1,0 +1,39 @@
+feature: 2026-04-10-code-reference
+created: 2026-04-10
+
+steps:
+  - action: "测试契约：覆盖代码地址格式化的核心行为"
+    exit_signal: "新测试因格式化能力尚不存在而失败"
+    status: pending
+  - action: "计算节点：实现相对路径规范化与选区行号格式化"
+    exit_signal: "单行、多行、行首边界和路径分隔符测试通过"
+    status: pending
+  - action: "编排接入：读取活动编辑器与选区并写入剪贴板"
+    exit_signal: "有效选区可复制，无编辑器、无选区及非工作区文件均显式报错"
+    status: pending
+  - action: "挂载与收尾：注册命令、菜单、激活清单并刷新说明"
+    exit_signal: "清单生成、lint、测试和打包全部通过"
+    status: pending
+
+checks:
+  - item: "单行选区输出 @path:line"
+    source: 验收场景
+    status: pending
+  - item: "多行选区输出 @path:start-end"
+    source: 验收场景
+    status: pending
+  - item: "结束位置在下一行第 0 列时不计入该行"
+    source: 流程级约束
+    status: pending
+  - item: "Windows 路径分隔符统一为 /"
+    source: 验收场景
+    status: pending
+  - item: "仅在编辑器存在选区时显示右键菜单"
+    source: 挂载点
+    status: pending
+  - item: "无活动编辑器、无选区或文件不在工作区时显式失败"
+    source: 流程级约束
+    status: pending
+  - item: "不改变现有资源管理器右键命令行为"
+    source: 范围守护
+    status: pending

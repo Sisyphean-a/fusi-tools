@@ -1,0 +1,36 @@
+feature: 2026-03-06-smart-translate-api
+created: 2026-03-06
+
+steps:
+  - action: "测试契约：覆盖新接口参数映射和响应解析"
+    exit_signal: "测试可证明当前实现与新接口契约不匹配"
+    status: pending
+  - action: "请求节点：切换 single 接口并映射目标语言参数"
+    exit_signal: "中文请求 tl=en，英文请求 tl=zh_CN"
+    status: pending
+  - action: "响应节点：解析 translation 与 detectedSource"
+    exit_signal: "译文和源语言按新响应结构返回，缺失 detectedSource 时使用本地检测值"
+    status: pending
+  - action: "回归验证：确认上层交互和既有行为不变"
+    exit_signal: "compile-tests 与 lint 通过，调用方式和中文命名建议逻辑未改变"
+    status: pending
+
+checks:
+  - item: "中文输入映射为目标语言 en"
+    source: 验收场景
+    status: pending
+  - item: "非中文输入映射为目标语言 zh_CN"
+    source: 验收场景
+    status: pending
+  - item: "从 translation 字段解析译文"
+    source: 名词契约
+    status: pending
+  - item: "优先使用 info.detectedSource，缺失时回退本地检测值"
+    source: 流程级约束
+    status: pending
+  - item: "保留缓存、复合词预处理与错误抛出行为"
+    source: 范围守护
+    status: pending
+  - item: "不改变 smartTranslate 上层调用方式"
+    source: 范围守护
+    status: pending

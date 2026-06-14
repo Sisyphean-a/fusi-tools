@@ -1,3 +1,11 @@
+---
+doc_type: feature-design
+feature: 2026-04-10-code-reference
+status: approved
+summary: 在编辑器中复制适合 AI 使用的代码地址
+tags: [resource-manager, editor, clipboard]
+---
+
 # Resource Manager 代码地址复制设计
 
 **Goal:** 在编辑器选中代码后，通过右键菜单复制适合 AI 使用的代码地址，格式为 `@相对路径:起始行-结束行`。
