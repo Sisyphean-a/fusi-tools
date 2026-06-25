@@ -214,7 +214,13 @@ export class ResourceCommands {
       }
 
       const fileName = path.basename(filePath);
-      vscode.window.showInformationMessage(`文件已复制到剪贴板: ${fileName}`);
+      void vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `文件已复制到剪贴板: ${fileName}`,
+        },
+        () => new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+      );
       Logger.info(`已复制文件到剪贴板: ${filePath}`);
     } catch (error) {
       Logger.error("复制文件到剪贴板失败", error);
