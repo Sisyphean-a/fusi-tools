@@ -1,6 +1,7 @@
 import type { ClientRequest } from "http";
 import * as https from "https";
 import { URL } from "url";
+import * as Effect from "effect/Effect";
 import { LanguageDetector } from "./utils/languageDetector";
 import { TextProcessor } from "./utils/textProcessor";
 import { LRUCache } from "./utils/lruCache";
@@ -8,18 +9,15 @@ import { LRUCache } from "./utils/lruCache";
 const DEFAULT_CACHE_SIZE = 200;
 const HTTPS_PORT = 443;
 const REQUEST_TIMEOUT_MS = 10000;
-const SISYPHEAN_API_URL = "https://fanyi.sisyphean.top/single";
-const GOOGLE_API_URL =
-  "https://translate.googleapis.com/translate_a/single";
+const GOOGLE_API_URL = "https://translate.googleapis.com/translate_a/single";
+const MICROSOFT_API_URL = "https://edge.microsoft.com/translate/translatetext";
+
+// 所有翻译源同时请求，Effect.raceAll 会忽略失败，直到第一个成功结果返回。
+const TRANSLATION_PROVIDERS = ["google", "deeplx", "microsoft"] as const;
 
 type InternalLanguageCode = "zh" | "en";
 
-type SisypheanApiResponse = {
-  translation?: string;
-  info?: {
-    detectedSource?: string;
-  };
-};
+export type TranslationProvider = (typeof TRANSLATION_PROVIDERS)[number];
 
 type GoogleApiResponse = {
   sentences?: Array<{ trans?: string }>;
@@ -33,16 +31,14 @@ type DeepLXApiResponse = {
   source_lang?: string;
 };
 
-const DEFAULT_SETTINGS: TranslatorSettings = Object.freeze({
-  deeplxApiKey: "",
-  deeplxEndpoint: "",
-  provider: "sisyphean",
-});
-
-export type TranslationProvider = "sisyphean" | "google" | "deeplx";
+type MicrosoftApiResponse = Array<{
+  translations?: Array<{
+    text?: string;
+    to?: string;
+  }>;
+}>;
 
 export interface TranslatorSettings {
-  provider: TranslationProvider;
   deeplxEndpoint: string;
   deeplxApiKey: string;
 }
@@ -72,7 +68,11 @@ export class TranslatorService {
   ) {
     this.languageDetector = new LanguageDetector();
     this.cache = new LRUCache(cacheSize);
-    this.settings = { ...DEFAULT_SETTINGS, ...settings };
+    this.settings = {
+      deeplxApiKey: "",
+      deeplxEndpoint: "",
+      ...settings,
+    };
   }
 
   async translate(text: string): Promise<TranslationResult> {
@@ -85,11 +85,21 @@ export class TranslatorService {
     const detectedLanguage = this.detectLanguage(text);
     const targetLanguage = detectedLanguage === "zh" ? "en" : "zh";
     const textToTranslate = this.prepareTextForTranslation(text, detectedLanguage);
-    const apiResult = await this.requestTranslation(
-      textToTranslate,
-      detectedLanguage,
-      targetLanguage
+    const requests = TRANSLATION_PROVIDERS.map((provider) =>
+      Effect.tryPromise({
+        try: () =>
+          this.requestTranslation(
+            provider,
+            textToTranslate,
+            detectedLanguage,
+            targetLanguage
+          ),
+        catch: (error) =>
+          error instanceof Error ? error : new Error(String(error)),
+      })
     );
+
+    const apiResult = await Effect.runPromise(Effect.raceAll(requests));
     const result: TranslationResult = {
       originalText: text,
       sourceLanguage: apiResult.sourceLanguage,
@@ -125,47 +135,39 @@ export class TranslatorService {
   }
 
   private async requestTranslation(
+    provider: TranslationProvider,
     text: string,
     sourceLanguage: InternalLanguageCode,
     targetLanguage: InternalLanguageCode
   ): Promise<{ translatedText: string; sourceLanguage: string }> {
-    const request = this.buildRequest(text, sourceLanguage, targetLanguage);
+    const request = this.buildRequest(
+      provider,
+      text,
+      sourceLanguage,
+      targetLanguage
+    );
     const response = await this.makeHttpRequest(request);
-    return this.parseResponse(response, sourceLanguage);
+    return this.parseResponse(
+      provider,
+      response,
+      sourceLanguage
+    );
   }
 
   private buildRequest(
+    provider: TranslationProvider,
     text: string,
     sourceLanguage: InternalLanguageCode,
     targetLanguage: InternalLanguageCode
   ): HttpRequestOptions {
-    switch (this.settings.provider) {
+    switch (provider) {
       case "google":
         return this.buildGoogleRequest(text, targetLanguage);
       case "deeplx":
         return this.buildDeepLXRequest(text, sourceLanguage, targetLanguage);
-      default:
-        return this.buildSisypheanRequest(text, sourceLanguage, targetLanguage);
+      case "microsoft":
+        return this.buildMicrosoftRequest(text, sourceLanguage, targetLanguage);
     }
-  }
-
-  private buildSisypheanRequest(
-    text: string,
-    sourceLanguage: InternalLanguageCode,
-    targetLanguage: InternalLanguageCode
-  ): HttpRequestOptions {
-    const params = new URLSearchParams({
-      client: "gtx",
-      dt: "t",
-      q: text,
-      sl: sourceLanguage,
-      tl: this.mapSisypheanTargetLanguage(targetLanguage),
-    });
-
-    return {
-      method: "GET",
-      url: `${SISYPHEAN_API_URL}?${params.toString()}`,
-    };
   }
 
   private buildGoogleRequest(
@@ -217,6 +219,27 @@ export class TranslatorService {
     };
   }
 
+  private buildMicrosoftRequest(
+    text: string,
+    sourceLanguage: InternalLanguageCode,
+    targetLanguage: InternalLanguageCode
+  ): HttpRequestOptions {
+    const params = new URLSearchParams({
+      from: this.mapMicrosoftLanguage(sourceLanguage),
+      to: this.mapMicrosoftLanguage(targetLanguage),
+      isEnterpriseClient: "false",
+    });
+
+    return {
+      body: JSON.stringify([text]),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      url: `${MICROSOFT_API_URL}?${params.toString()}`,
+    };
+  }
+
   private getRequiredDeepLXValue(value: string, message: string): string {
     const trimmedValue = value.trim();
     if (!trimmedValue) {
@@ -224,12 +247,6 @@ export class TranslatorService {
     }
 
     return trimmedValue;
-  }
-
-  private mapSisypheanTargetLanguage(
-    targetLanguage: InternalLanguageCode
-  ): string {
-    return targetLanguage === "zh" ? "zh_CN" : targetLanguage;
   }
 
   private mapGoogleTargetLanguage(
@@ -242,36 +259,23 @@ export class TranslatorService {
     return language === "zh" ? "ZH" : "EN";
   }
 
+  private mapMicrosoftLanguage(language: InternalLanguageCode): string {
+    return language === "zh" ? "zh-Hans" : "en";
+  }
+
   private parseResponse(
+    provider: TranslationProvider,
     response: string,
     fallbackSourceLanguage: InternalLanguageCode
   ): { translatedText: string; sourceLanguage: string } {
-    switch (this.settings.provider) {
+    switch (provider) {
       case "google":
         return this.parseGoogleResponse(response, fallbackSourceLanguage);
       case "deeplx":
         return this.parseDeepLXResponse(response, fallbackSourceLanguage);
-      default:
-        return this.parseSisypheanResponse(response, fallbackSourceLanguage);
+      case "microsoft":
+        return this.parseMicrosoftResponse(response, fallbackSourceLanguage);
     }
-  }
-
-  private parseSisypheanResponse(
-    response: string,
-    fallbackSourceLanguage: InternalLanguageCode
-  ): { translatedText: string; sourceLanguage: string } {
-    const data = JSON.parse(response) as SisypheanApiResponse;
-    if (!data.translation) {
-      throw new Error("Sisyphean 翻译返回格式无效");
-    }
-
-    return {
-      sourceLanguage: this.normalizeLanguageCode(
-        data.info?.detectedSource,
-        fallbackSourceLanguage
-      ),
-      translatedText: data.translation,
-    };
   }
 
   private parseGoogleResponse(
@@ -309,6 +313,25 @@ export class TranslatorService {
         fallbackSourceLanguage
       ),
       translatedText: data.data,
+    };
+  }
+
+  private parseMicrosoftResponse(
+    response: string,
+    fallbackSourceLanguage: InternalLanguageCode
+  ): { translatedText: string; sourceLanguage: string } {
+    const data = JSON.parse(response) as MicrosoftApiResponse;
+    const translatedText = data
+      .flatMap((item) => item.translations ?? [])
+      .map((translation) => translation.text ?? "")
+      .join("");
+    if (!translatedText) {
+      throw new Error("Microsoft 翻译返回格式无效");
+    }
+
+    return {
+      sourceLanguage: fallbackSourceLanguage,
+      translatedText,
     };
   }
 

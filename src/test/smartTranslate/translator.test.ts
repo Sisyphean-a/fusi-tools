@@ -1,149 +1,136 @@
 import * as assert from "assert";
 import {
   HttpRequestOptions,
+  TranslationProvider,
   TranslatorService,
-  TranslatorSettings,
 } from "../../features/smartTranslate/translator";
 
 type RequestRecorder = {
-  requestedRequest: () => HttpRequestOptions;
+  requests: HttpRequestOptions[];
   service: TranslatorService;
 };
 
-function createServiceWithResponse(
-  response: string,
-  settings?: Partial<TranslatorSettings>
+function providerOf(request: HttpRequestOptions): TranslationProvider {
+  if (request.url.includes("translate.googleapis.com")) {
+    return "google";
+  }
+  if (request.url.includes("edge.microsoft.com")) {
+    return "microsoft";
+  }
+  return "deeplx";
+}
+
+function createService(
+  responseFor: (provider: TranslationProvider) => Promise<string> | string
 ): RequestRecorder {
   const service = new TranslatorService({
-    provider: "sisyphean",
-    deeplxApiKey: "",
-    deeplxEndpoint: "",
-    ...settings,
+    deeplxApiKey: "test-key",
+    deeplxEndpoint: "https://api.deeplx.org/v2/translate",
   });
-  let capturedRequest: HttpRequestOptions = {
-    body: undefined,
-    headers: {},
-    method: "GET",
-    url: "",
-  };
+  const requests: HttpRequestOptions[] = [];
 
   (
     service as unknown as {
       makeHttpRequest: (request: HttpRequestOptions) => Promise<string>;
     }
-  ).makeHttpRequest = async (
-    request: HttpRequestOptions
-  ) => {
-    capturedRequest = request;
-    return response;
+  ).makeHttpRequest = async (request: HttpRequestOptions) => {
+    requests.push(request);
+    return responseFor(providerOf(request));
   };
 
-  return {
-    requestedRequest: () => capturedRequest,
-    service,
-  };
+  return { requests, service };
 }
 
+const successResponses: Record<TranslationProvider, string> = {
+  google: JSON.stringify({
+    sentences: [{ trans: "天空是" }, { trans: "蓝色的" }],
+    src: "en",
+  }),
+  deeplx: JSON.stringify({
+    code: 200,
+    data: "天空是蓝色的",
+    source_lang: "EN",
+  }),
+  microsoft: JSON.stringify([
+    {
+      translations: [
+        { text: "天空是蓝色的", to: "zh-Hans" },
+      ],
+    },
+  ]),
+};
+
 suite("SmartTranslate TranslatorService", () => {
-  test("Sisyphean provider 应请求 /single 并解析 translation 字段", async () => {
-    const recorder = createServiceWithResponse(
-      JSON.stringify({
-        translation: "the sky is blue",
-        info: { detectedSource: "zh-CN", original: "天空是蓝色的" },
-      })
-    );
-
-    const result = await recorder.service.translate("天空是蓝色的");
-
-    assert.strictEqual(result.translatedText, "the sky is blue");
-    assert.strictEqual(result.targetLanguage, "en");
-    assert.strictEqual(result.sourceLanguage, "zh");
-    assert.strictEqual(recorder.requestedRequest().method, "GET");
-    assert.ok(recorder.requestedRequest().url.includes("https://fanyi.sisyphean.top/single"));
-    assert.ok(recorder.requestedRequest().url.includes("client=gtx"));
-    assert.ok(recorder.requestedRequest().url.includes("sl=zh"));
-    assert.ok(recorder.requestedRequest().url.includes("tl=en"));
-    assert.ok(recorder.requestedRequest().url.includes("dt=t"));
-    assert.ok(recorder.requestedRequest().url.includes("q=%E5%A4%A9%E7%A9%BA"));
-  });
-
-  test("Google provider 应请求 translate.googleapis.com 并解析 sentences", async () => {
-    const recorder = createServiceWithResponse(
-      JSON.stringify({
-        sentences: [{ trans: "天空是" }, { trans: "蓝色的" }],
-        src: "en",
-      }),
-      { provider: "google" }
-    );
+  test("应并行调用所有翻译接口，并采用第一个成功结果", async () => {
+    const recorder = createService(async (provider) => {
+      await new Promise((resolve) =>
+        setTimeout(resolve, provider === "microsoft" ? 10 : 80)
+      );
+      return successResponses[provider];
+    });
 
     const result = await recorder.service.translate("theSkyIsBlue");
 
     assert.strictEqual(result.translatedText, "天空是蓝色的");
-    assert.strictEqual(result.sourceLanguage, "en");
-    assert.strictEqual(result.targetLanguage, "zh");
-    assert.strictEqual(recorder.requestedRequest().method, "GET");
-    assert.ok(
-      recorder.requestedRequest().url.includes(
-        "https://translate.googleapis.com/translate_a/single"
-      )
+    assert.deepStrictEqual(
+      recorder.requests.map(providerOf).sort(),
+      ["deeplx", "google", "microsoft"]
     );
-    assert.ok(recorder.requestedRequest().url.includes("sl=auto"));
-    assert.ok(recorder.requestedRequest().url.includes("tl=zh-CN"));
-    assert.ok(recorder.requestedRequest().url.includes("dt=t"));
-    assert.ok(recorder.requestedRequest().url.includes("dj=1"));
-    assert.ok(recorder.requestedRequest().url.includes("ie=UTF-8"));
-    assert.ok(recorder.requestedRequest().url.includes("q=the+sky+is+blue"));
   });
 
-  test("DeepLX provider 应发送 POST 请求并携带授权头", async () => {
-    const recorder = createServiceWithResponse(
-      JSON.stringify({
-        code: 200,
-        data: "天空是蓝色的",
-        source_lang: "EN",
-        target_lang: "ZH",
-      }),
-      {
-        deeplxApiKey: "test-key",
-        deeplxEndpoint: "https://api.deeplx.org/v2/translate",
-        provider: "deeplx",
+  test("Microsoft 接口应发送指定格式的 POST 请求", async () => {
+    const recorder = createService((provider) => {
+      if (provider === "microsoft") {
+        return successResponses.microsoft;
       }
-    );
+      return Promise.reject(new Error(`${provider} unavailable`));
+    });
 
-    const result = await recorder.service.translate("theSkyIsBlue");
+    await recorder.service.translate("Hello");
 
-    assert.strictEqual(result.translatedText, "天空是蓝色的");
-    assert.strictEqual(result.sourceLanguage, "en");
-    assert.strictEqual(result.targetLanguage, "zh");
-    assert.strictEqual(recorder.requestedRequest().method, "POST");
-    assert.strictEqual(
-      recorder.requestedRequest().url,
-      "https://api.deeplx.org/v2/translate"
+    const request = recorder.requests.find(
+      (item) => providerOf(item) === "microsoft"
     );
-    assert.deepStrictEqual(recorder.requestedRequest().headers, {
-      Authorization: "Bearer test-key",
+    assert.ok(request);
+    assert.strictEqual(request.method, "POST");
+    assert.ok(request.url.includes("from=en"));
+    assert.ok(request.url.includes("to=zh-Hans"));
+    assert.deepStrictEqual(request.headers, {
       "Content-Type": "application/json",
     });
-    assert.strictEqual(
-      recorder.requestedRequest().body,
-      JSON.stringify({
-        source_lang: "EN",
-        target_lang: "ZH",
-        text: "the sky is blue",
-      })
-    );
+    assert.strictEqual(request.body, JSON.stringify(["hello"]));
   });
 
-  test("DeepLX provider 缺少 endpoint 时应显式报错", async () => {
-    const recorder = createServiceWithResponse("{}", {
-      deeplxApiKey: "test-key",
-      deeplxEndpoint: "",
-      provider: "deeplx",
-    });
+  test("DeepLX 未配置时不应阻止其他接口成功", async () => {
+    const service = new TranslatorService();
+    const requests: HttpRequestOptions[] = [];
+    (
+      service as unknown as {
+        makeHttpRequest: (request: HttpRequestOptions) => Promise<string>;
+      }
+    ).makeHttpRequest = async (request) => {
+      requests.push(request);
+      if (providerOf(request) === "google") {
+        return successResponses.google;
+      }
+      return Promise.reject(new Error("provider unavailable"));
+    };
+
+    const result = await service.translate("theSkyIsBlue");
+
+    assert.strictEqual(result.translatedText, "天空是蓝色的");
+    assert.strictEqual(requests.length, 2);
+  });
+
+  test("全部接口失败时才应返回失败", async () => {
+    const recorder = createService(() =>
+      Promise.reject(new Error("provider unavailable"))
+    );
 
     await assert.rejects(
       () => recorder.service.translate("hello"),
-      /DeepLX 请求地址未配置/
+      /provider unavailable/
     );
+    assert.strictEqual(recorder.requests.length, 3);
   });
 });

@@ -9,11 +9,6 @@ export type LogLevelType = 'debug' | 'info' | 'warn' | 'error' | 'none';
 export type StatusBarPosition = 'left' | 'right';
 
 /**
- * 智能翻译提供方类型
- */
-export type SmartTranslateProvider = 'sisyphean' | 'google' | 'deeplx';
-
-/**
  * Git 忽略类型
  */
 export type GitIgnoreType = 'assume' | 'skip';
@@ -58,8 +53,6 @@ export interface FusiToolsConfig {
   'smartTranslate.enabled': boolean;
   /** 翻译结果显示时长（毫秒） */
   'smartTranslate.displayDuration': number;
-  /** 智能翻译提供方 */
-  'smartTranslate.provider': SmartTranslateProvider;
   /** DeepLX 请求地址 */
   'smartTranslate.deeplx.endpoint': string;
   /** DeepLX API Key */

@@ -34,6 +34,9 @@
     "test": "vscode-test",
     "generate:manifest": "node scripts/generate-manifest.js"
   },
+  "dependencies": {
+    "effect": "^3.22.1"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.3",

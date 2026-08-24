@@ -1,10 +1,6 @@
 import * as vscode from "vscode";
 import { Logger } from "../../logger";
-import {
-  TranslationProvider,
-  TranslationResult,
-  TranslatorService,
-} from "./translator";
+import { TranslationResult, TranslatorService } from "./translator";
 import { StatusBarManager } from "./ui/statusBar";
 import { NameGenerator } from "./nameGenerator";
 import { NamingPanel } from "./ui/namingPanel";
@@ -147,7 +143,6 @@ function loadTranslatorSettings() {
   return {
     deeplxApiKey: config.get<string>("deeplx.apiKey", "").trim(),
     deeplxEndpoint: config.get<string>("deeplx.endpoint", "").trim(),
-    provider: config.get<TranslationProvider>("provider", "sisyphean"),
   };
 }
 

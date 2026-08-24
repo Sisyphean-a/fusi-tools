@@ -30,10 +30,7 @@
 
 - **自动识别**：选中代码或注释，自动进行英汉互译
 - **变量命名建议**：选中中文描述，生成驼峰 / 下划线风格的变量名
-- **多翻译源**：
-  - `sisyphean`（默认）：内置翻译接口，无需配置
-  - `google`：Google Translate 接口
-  - `deeplx`：DeepLX 接口，需自行配置请求地址和 API Key
+- **多翻译源并行竞速**：Google、Microsoft 同时请求；DeepLX 在配置地址和 API Key 后加入竞速，采用第一个成功结果，全部失败才提示失败
 - **状态栏显示**：翻译结果悬浮在状态栏展示，不打断心流
 - **开关控制**：可通过命令面板（`启用/禁用 智能翻译`）随时切换
 
@@ -99,9 +96,9 @@ VS Code 内置的 Git Worktree 管理工具，支持并行多分支开发。
 | ---------------------------------------------- | ------- | ------------ | ---------------------------------------- |
 | `fusi-tools.smartTranslate.enabled`            | boolean | `true`       | 启用 / 禁用智能翻译                      |
 | `fusi-tools.smartTranslate.displayDuration`    | number  | `5000`       | 翻译结果显示时长（毫秒）                 |
-| `fusi-tools.smartTranslate.provider`           | string  | `sisyphean`  | 翻译源：`sisyphean` / `google` / `deeplx` |
-| `fusi-tools.smartTranslate.deeplx.endpoint`    | string  | `""`         | DeepLX 请求地址                          |
-| `fusi-tools.smartTranslate.deeplx.apiKey`      | string  | `""`         | DeepLX API Key                           |
+| 智能翻译接口                                      | —       | —            | Google、Microsoft、DeepLX（已配置时）并行请求，采用第一个成功结果 |
+| `fusi-tools.smartTranslate.deeplx.endpoint`    | string  | `""`         | DeepLX 请求地址（配置后参与并行请求）      |
+| `fusi-tools.smartTranslate.deeplx.apiKey`      | string  | `""`         | DeepLX API Key（配置后参与并行请求）        |
 | `fusi-tools.smartTranslate.statusBarPosition`  | string  | `right`      | 翻译状态栏位置：`left` / `right`          |
 
 ### Resource Manager
